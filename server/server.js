@@ -36,4 +36,8 @@ if (require.main === module) {
   });
 }
 
+// error handling middleware
+const { errorHandler } = require('./middleware/error');
+app.use(errorHandler);
+
 module.exports = app;

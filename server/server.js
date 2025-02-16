@@ -19,6 +19,10 @@ app.use('/api/auth', authRoutes);
 const ticketRoutes = require('./routes/ticket');
 app.use('/api/tickets', ticketRoutes);
 
+// Chat routes
+const chatRoutes = require('./routes/chat');
+app.use('/api/chats', chatRoutes);
+
 
 app.get('/', (req, res) => {
   res.send('TNTX Connect Backend is running!');

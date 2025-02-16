@@ -16,12 +16,12 @@ const ticketSchema = new mongoose.Schema(
       ref: 'User',
       required: true
     },
-    // Company can later be a reference if you build a Company model,
-    // but for now it's a string
+    // Reference the logged-in driver's company in the Company Model
     company: {
-      type: String,
-      required: [true, 'Please add the company name']
-    },
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Company',
+        required: [true, 'Please provide a company']
+      },
     truckNumber: {
       type: String,
       required: [true, 'Please add the truck number']

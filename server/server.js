@@ -11,9 +11,14 @@ const PORT = process.env.PORT || 5000;
 
 app.use(express.json());
 
-// Mount auth routes
+// Auth routes
 const authRoutes = require('./routes/auth');
 app.use('/api/auth', authRoutes);
+
+// Ticket routes
+const ticketRoutes = require('./routes/ticket');
+app.use('/api/tickets', ticketRoutes);
+
 
 app.get('/', (req, res) => {
   res.send('TNTX Connect Backend is running!');

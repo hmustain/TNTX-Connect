@@ -17,7 +17,7 @@ beforeAll(async () => {
   // Create a test user
   testUser = new User({
     name: 'Chat Tester',
-    email: 'chattester@example.com',
+    email: `chattester_${Date.now()}@example.com`,
     password: 'Test@1234'
   });
   await testUser.save();
@@ -25,8 +25,14 @@ beforeAll(async () => {
   // Create a test company
   testCompany = new Company({ name: 'Chat Test Company' });
   await testCompany.save();
+});
 
-  // Create a test ticket
+beforeEach(async () => {
+  // Clear out Tickets and Chats before each test to avoid duplicate key errors.
+  await Ticket.deleteMany({});
+  await Chat.deleteMany({});
+
+  // Create a new test ticket for each test in this file.
   testTicket = new Ticket({
     ticketNumber: '00002',
     user: testUser._id,

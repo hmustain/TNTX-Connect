@@ -15,7 +15,7 @@ beforeAll(async () => {
   // Create a test user
   testUser = new User({
     name: 'Ticket Tester',
-    email: 'tickettester@example.com',
+    email: `tickettester_${Date.now()}@example.com`,
     password: 'Test@1234'
   });
   await testUser.save();
@@ -23,6 +23,11 @@ beforeAll(async () => {
   // Create a test company
   testCompany = new Company({ name: 'Ticket Test Company' });
   await testCompany.save();
+});
+
+beforeEach(async () => {
+  // Clean up the Ticket collection before each test
+  await Ticket.deleteMany({});
 });
 
 afterAll(async () => {
@@ -62,7 +67,6 @@ describe('Ticket Model Test', () => {
       err = error;
     }
     expect(err).toBeInstanceOf(mongoose.Error.ValidationError);
-    // For example, ticketNumber, user, company, truckNumber, etc. are required.
     expect(err.errors.ticketNumber).toBeDefined();
     expect(err.errors.user).toBeDefined();
     expect(err.errors.company).toBeDefined();

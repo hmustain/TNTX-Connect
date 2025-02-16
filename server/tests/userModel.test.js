@@ -1,4 +1,4 @@
-// server/tests/userModel.test.js
+// tests/userModel.test.js
 const mongoose = require('mongoose');
 const User = require('../models/User');
 require('dotenv').config();
@@ -12,6 +12,11 @@ afterAll(async () => {
   await mongoose.connection.close();
 });
 
+beforeEach(async () => {
+  // Clean up the User collection before each test
+  await User.deleteMany({});
+});
+
 describe('User Model Test', () => {
   it('create & save user successfully', async () => {
     const userData = {
@@ -22,7 +27,6 @@ describe('User Model Test', () => {
     const validUser = new User(userData);
     const savedUser = await validUser.save();
 
-    // Object Id should be defined when successfully saved to MongoDB.
     expect(savedUser._id).toBeDefined();
     expect(savedUser.name).toBe(userData.name);
     expect(savedUser.email).toBe(userData.email);

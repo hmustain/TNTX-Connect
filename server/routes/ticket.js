@@ -8,20 +8,21 @@ const {
   updateTicket,
   deleteTicket,
 } = require('../controllers/ticketController');
+const { protect } = require('../middleware/auth');
 
 // Create a ticket
-router.post('/', createTicket);
+router.post('/', protect, createTicket);
 
 // Get all tickets
-router.get('/', getTickets);
+router.get('/', protect, getTickets);
 
 // Get single ticket by ID
-router.get('/:id', getTicketById);
+router.get('/:id', protect, getTicketById);
 
 // Update ticket by ID
-router.put('/:id', updateTicket);
+router.put('/:id', protect, updateTicket);
 
 // Delete ticket by ID
-router.delete('/:id', deleteTicket);
+router.delete('/:id', protect, deleteTicket);
 
 module.exports = router;

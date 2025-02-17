@@ -67,4 +67,25 @@ describe('Auth Endpoints', () => {
     expect(res.statusCode).toEqual(401);
     expect(res.body.success).toBe(false);
   });
+  it('should get the current user profile', async () => {
+    // First, register a user to get a token
+    const registerRes = await request(app)
+      .post('/api/auth/register')
+      .send({
+        name: 'Profile Test User',
+        email: `profile_${Date.now()}@example.com`,
+        password: 'Test@1234'
+      });
+    const token = registerRes.body.token;
+  
+    // Now, retrieve the current user profile
+    const res = await request(app)
+      .get('/api/auth/me')
+      .set('Authorization', `Bearer ${token}`);
+  
+    expect(res.statusCode).toEqual(200);
+    expect(res.body.success).toBe(true);
+    expect(res.body.data).toHaveProperty('_id');
+    expect(res.body.data.email).toBe(registerRes.body.data.email);
+  });  
 });

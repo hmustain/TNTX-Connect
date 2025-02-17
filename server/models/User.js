@@ -33,7 +33,11 @@ const userSchema = new mongoose.Schema(
       type: String,
       enum: ['driver', 'agent', 'admin', 'company_admin'],
       default: 'driver'
-    }
+    },
+    isActive: {
+      type: Boolean,
+      default: true
+    },
   },
   {
     timestamps: true

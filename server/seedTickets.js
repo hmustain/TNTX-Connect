@@ -19,39 +19,43 @@ const seedTickets = async () => {
 
     const ticketPromises = [];
 
-    // For each driver and each company, create 5 tickets
+    // For each driver, create 2 tickets (select a random company for each)
     for (const driver of drivers) {
-      for (const company of companies) {
-        for (let i = 1; i <= 5; i++) {
-          // Generate a random 5-digit ticket number
-          const randomTicketNumber = Math.floor(Math.random() * 100000)
+      for (let i = 1; i <= 2; i++) {
+        // Choose a random company from the companies list
+        const company = companies[Math.floor(Math.random() * companies.length)];
+
+        // Generate a random 5-digit ticket number
+        const randomTicketNumber = Math.floor(Math.random() * 100000)
+          .toString()
+          .padStart(5, '0');
+
+        const ticketData = {
+          ticketNumber: randomTicketNumber,
+          user: driver._id, // Associate the ticket with the driver
+          company: company._id,
+          truckNumber: `TX${Math.floor(Math.random() * 10000)}`,
+          vinLast8: 'VIN' + Math.floor(Math.random() * 10000000)
             .toString()
-            .padStart(5, '0');
+            .padStart(8, '0'),
+          mileage: Math.floor(Math.random() * 200000),
+          trailerNumber: `TR${Math.floor(Math.random() * 10000)}`,
+          // Alternate loadStatus for variety
+          loadStatus: i % 2 === 0 ? 'loaded' : 'empty',
+          loadNumber: i % 2 === 0 ? `LOAD${Math.floor(Math.random() * 10000)}` : undefined,
+          complaint: `Complaint ${i} for ${driver.name}: Engine overheating or brake failure.`,
+          currentLocation: 'Test Location'
+        };
 
-          const ticketData = {
-            ticketNumber: randomTicketNumber,
-            user: driver._id, // Associate ticket with the driver
-            company: company._id,
-            truckNumber: `TX${Math.floor(Math.random() * 10000)}`,
-            vinLast8: 'VIN' + Math.floor(Math.random() * 10000000)
-              .toString()
-              .padStart(8, '0'),
-            mileage: Math.floor(Math.random() * 200000),
-            trailerNumber: `TR${Math.floor(Math.random() * 10000)}`,
-            // Alternate loadStatus for variety
-            loadStatus: i % 2 === 0 ? 'loaded' : 'empty',
-            loadNumber: i % 2 === 0 ? `LOAD${Math.floor(Math.random() * 10000)}` : undefined,
-            complaint: `Complaint ${i} for ${driver.name}: Engine overheating or brake failure.`,
-            currentLocation: 'Test Location'
-          };
-
-          ticketPromises.push(Ticket.create(ticketData));
-        }
+        ticketPromises.push(Ticket.create(ticketData));
       }
     }
 
     const tickets = await Promise.all(ticketPromises);
     console.log(`Created ${tickets.length} tickets.`);
+    tickets.forEach(ticket => {
+      console.log(`Ticket ${ticket.ticketNumber} for driver ${ticket.user} - ${ticket._id}`);
+    });
     process.exit(0);
   } catch (error) {
     console.error("Error seeding tickets:", error);

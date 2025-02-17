@@ -9,6 +9,12 @@ const seedDrivers = async () => {
     // Connect to the database
     await connectDB();
 
+    // Clear the drivers from the collection
+    // Option 1: Clear all users with role 'driver'
+    await User.deleteMany({ role: 'driver' });
+    // Option 2: Alternatively, if you want to only clear test drivers with a specific email pattern, use:
+    // await User.deleteMany({ email: { $regex: '^hunter|amy|barrett|romy|bruce|rosemary|levi|brooks' } });
+
     // Array of driver names
     const drivers = [
       "Hunter Mustain",
@@ -40,7 +46,6 @@ const seedDrivers = async () => {
       console.log(`${driver.name} - ${driver._id}`);
     });
 
-    // Exit the process successfully
     process.exit(0);
   } catch (error) {
     console.error("Error seeding drivers:", error);

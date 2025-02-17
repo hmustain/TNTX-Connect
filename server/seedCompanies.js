@@ -9,6 +9,9 @@ const seedCompanies = async () => {
     // Connect to the database
     await connectDB();
 
+    // Clear the companies collection
+    await Company.deleteMany({});
+
     // Define an array of company names
     const companyNames = [
       "Sky Transportation",
@@ -30,7 +33,6 @@ const seedCompanies = async () => {
       console.log(`${company.name} - ${company._id}`);
     });
 
-    // Exit the process successfully
     process.exit(0);
   } catch (error) {
     console.error('Error seeding companies:', error);

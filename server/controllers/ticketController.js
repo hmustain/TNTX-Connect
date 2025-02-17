@@ -38,6 +38,20 @@ exports.getTickets = async (req, res) => {
   }
 };
 
+// Get tickets by authenticated user only
+exports.getMyTickets = async (req, res) => {
+  try {
+    // Assuming req.user is populated by the protect middleware
+    const tickets = await Ticket.find({ user: req.user._id });
+    res.status(200).json({
+      success: true,
+      data: tickets,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
 // Get a single ticket by ID
 exports.getTicketById = async (req, res) => {
   try {

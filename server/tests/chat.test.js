@@ -34,9 +34,12 @@ beforeEach(async () => {
   await Chat.deleteMany({});
   await Ticket.deleteMany({});
 
+  // Generate a unique ticket number to avoid duplicate key errors
+  const uniqueTicketNumber = (Math.floor(Math.random() * 100000)).toString().padStart(5, '0');
+
   // Create a test ticket for chat tests
   testTicket = await Ticket.create({
-    ticketNumber: '00003',
+    ticketNumber: uniqueTicketNumber,
     user: testUser._id,
     company: testCompany._id,
     truckNumber: 'TX2001',
@@ -89,7 +92,7 @@ describe('Protected Chat Endpoints', () => {
     const res = await request(app)
       .get(`/api/chats/ticket/${testTicket._id}`)
       .set('Authorization', `Bearer ${token}`);
-      
+
     expect(res.statusCode).toEqual(200);
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.data)).toBe(true);

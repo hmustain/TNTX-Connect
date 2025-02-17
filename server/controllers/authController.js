@@ -55,3 +55,16 @@ exports.loginUser = async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 };
+
+// Function to get the current user's profile
+exports.getCurrentUser = async (req, res) => {
+  try {
+    // req.user should be populated by the protect middleware
+    res.status(200).json({
+      success: true,
+      data: req.user,
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};

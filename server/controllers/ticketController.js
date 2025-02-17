@@ -1,14 +1,14 @@
 // server/controllers/ticketController.js
 const Ticket = require('../models/Ticket');
 
+// Create a new ticket
 exports.createTicket = async (req, res) => {
   try {
-    // Assume the authenticated user is attached to req.user
-    // (We'll add middleware for authentication later.)
-    const ticketData = req.body;
+    // Ensure that the ticket is associated with the authenticated user
+    const ticketData = { ...req.body, user: req.user._id };
 
     // Auto-generate a ticket number:
-    // Find the ticket with the highest ticketNumber (assuming ticketNumber is stored as a string, e.g., "00001")
+    // Find the ticket with the most recent creation date
     const lastTicket = await Ticket.findOne().sort({ createdAt: -1 });
     const lastTicketNumber = lastTicket ? parseInt(lastTicket.ticketNumber, 10) : 0;
     // Increment and pad to 5 digits (e.g., "00001")
@@ -25,7 +25,7 @@ exports.createTicket = async (req, res) => {
   }
 };
 
-// Get all tickets
+// Get all tickets (for agents/admins)
 exports.getTickets = async (req, res) => {
   try {
     const tickets = await Ticket.find();
@@ -38,11 +38,14 @@ exports.getTickets = async (req, res) => {
   }
 };
 
-// Get tickets by authenticated user only
+// Get tickets by authenticated user only (for drivers)
 exports.getMyTickets = async (req, res) => {
   try {
-    // Assuming req.user is populated by the protect middleware
-    const tickets = await Ticket.find({ user: req.user._id });
+    if (!req.user || !req.user._id) {
+      return res.status(400).json({ success: false, error: 'User not authenticated properly' });
+    }
+    // Convert req.user._id to string for comparison if needed
+    const tickets = await Ticket.find({ user: req.user._id.toString() });
     res.status(200).json({
       success: true,
       data: tickets,

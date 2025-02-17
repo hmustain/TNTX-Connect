@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const app = require('../server'); 
 const User = require('../models/User');
 const Company = require('../models/Company');
-const Ticket = require('../models/Ticket'); // Required for cleanup
+const Ticket = require('../models/Ticket'); // For cleanup
 require('dotenv').config();
 const connectDB = require('../config/db');
 
@@ -29,8 +29,23 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  // Clean up tickets before each test to avoid duplicate key errors
+  // Clear out tickets before each test
   await Ticket.deleteMany({});
+
+  // Ensure testUser exists in the database
+  const existingUser = await User.findById(testUser._id);
+  if (!existingUser) {
+    // Re-register the user if not found
+    const userResponse = await request(app)
+      .post('/api/auth/register')
+      .send({
+        name: testUser.name,
+        email: testUser.email, // Use the same email
+        password: 'Test@1234'
+      });
+    token = userResponse.body.token;
+    testUser = userResponse.body.data;
+  }
 });
 
 afterAll(async () => {
@@ -40,6 +55,8 @@ afterAll(async () => {
 describe('Protected Ticket Endpoints', () => {
   it('should create a new ticket when authenticated', async () => {
     const ticketData = {
+      // Force the ticket to be associated with the authenticated user
+      // even if a user field is provided in req.body, our controller should overwrite it.
       user: testUser._id,
       company: testCompany._id,
       truckNumber: 'TX1001',
@@ -65,7 +82,7 @@ describe('Protected Ticket Endpoints', () => {
   });
 
   it('should get all tickets when authenticated', async () => {
-    // Create two tickets
+    // Create two tickets (without specifying ticketNumber so it auto-generates)
     const ticketData1 = {
       user: testUser._id,
       company: testCompany._id,
@@ -100,7 +117,6 @@ describe('Protected Ticket Endpoints', () => {
       .set('Authorization', `Bearer ${token}`)
       .send(ticketData2);
 
-    // Test GET /api/tickets returns all tickets
     const res = await request(app)
       .get('/api/tickets')
       .set('Authorization', `Bearer ${token}`);
@@ -108,11 +124,12 @@ describe('Protected Ticket Endpoints', () => {
     expect(res.statusCode).toEqual(200);
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.data)).toBe(true);
+    // Expect exactly 2 tickets
     expect(res.body.data.length).toEqual(2);
   });
 
   it('should get only my tickets when authenticated', async () => {
-    // Create a ticket for the current user
+    // Create one ticket for the current user
     const ticketData = {
       user: testUser._id,
       company: testCompany._id,
@@ -130,7 +147,7 @@ describe('Protected Ticket Endpoints', () => {
       .set('Authorization', `Bearer ${token}`)
       .send(ticketData);
 
-    // Now, get "my tickets" using the /mytickets endpoint
+    // Retrieve "my tickets" using the /mytickets endpoint
     const res = await request(app)
       .get('/api/tickets/mytickets')
       .set('Authorization', `Bearer ${token}`);
@@ -138,9 +155,9 @@ describe('Protected Ticket Endpoints', () => {
     expect(res.statusCode).toEqual(200);
     expect(res.body.success).toBe(true);
     expect(Array.isArray(res.body.data)).toBe(true);
-    // Since we only created one ticket in this test, the length should be 1
+    // Since we only created one ticket, the length should be 1
     expect(res.body.data.length).toEqual(1);
-    // Optionally, verify that the returned ticket's user matches testUser._id
+    // Verify that the returned ticket's user matches testUser._id
     res.body.data.forEach(ticket => {
       expect(ticket.user).toEqual(String(testUser._id));
     });

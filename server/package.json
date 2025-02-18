@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "jest --watchAll"
+    "test": "jest --watchAll",
+    "seed:companies": "node server/seedCompanies.js",
+  "seed:users": "node server/seedUsers.js",
+  "seed:tickets": "node server/seedTickets.js",
+  "seed:chats": "node server/seedChats.js",
+  "seed": "npm run seed:companies && npm run seed:users && npm run seed:tickets && npm run seed:chats"
   },
   "keywords": [],
   "author": "",

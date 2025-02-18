@@ -27,7 +27,13 @@ const seedUsers = async () => {
       { name: "Brodie Robbins", email: "brodie@example.com", password: "Test@1234", role: "driver"}
     ];
 
-    const createdUsers = await User.insertMany(usersData);
+    // Use a loop with save() so that pre-save middleware runs
+    const createdUsers = [];
+    for (const data of usersData) {
+      const user = new User(data);
+      await user.save();
+      createdUsers.push(user);
+    }
 
     console.log("Seeded Users:");
     createdUsers.forEach(user => {

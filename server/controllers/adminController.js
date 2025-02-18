@@ -48,6 +48,16 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
+// Get all companies (admin only)
+exports.getCompanies = async (req, res) => {
+    try {
+      const companies = await Company.find();
+      res.status(200).json({ success: true, data: companies });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  };
+  
 // Change a user's role (admin only)
 exports.changeUserRole = async (req, res) => {
   try {

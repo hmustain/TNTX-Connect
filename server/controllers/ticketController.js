@@ -25,10 +25,21 @@ exports.createTicket = async (req, res) => {
   }
 };
 
-// Get all tickets (for agents/admins)
+// Get all tickets this is role based ie: drivers can only see their tickets, agents/admin can see all, company_user can only see tickets for their company
 exports.getTickets = async (req, res) => {
   try {
-    const tickets = await Ticket.find();
+    let tickets;
+
+    if (req.user.role === 'admin' || req.user.role === 'agent') {
+      // Admins and agents can see all tickets
+      tickets = await Ticket.find();
+    } else if (req.user.role === 'company_user') {
+      // Company users should only see tickets for their company
+      tickets = await Ticket.find({ company: req.user.company });
+    } else {
+      // Drivers should only see their own tickets
+      tickets = await Ticket.find({ user: req.user._id });
+    }
     res.status(200).json({
       success: true,
       data: tickets,
@@ -37,6 +48,7 @@ exports.getTickets = async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 };
+
 
 // Get tickets by authenticated user only (for drivers)
 exports.getMyTickets = async (req, res) => {

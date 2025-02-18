@@ -32,7 +32,7 @@ router.put('/users/:id/status', setUserActiveStatus);
 
 // Company management routes
 router.get('/companies', getCompanies),
-router.get('companies/:id', getCompanyById),
+router.get('/companies/:id', getCompanyById),
 router.post('/companies', createCompany);
 router.put('/companies/:id', updateCompany);
 router.delete('/companies/:id', deleteCompany);

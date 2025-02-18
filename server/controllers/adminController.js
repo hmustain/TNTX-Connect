@@ -12,6 +12,16 @@ exports.createUser = async (req, res) => {
   }
 };
 
+// Get all users (admin only)
+exports.getUsers = async (req, res) => {
+    try {
+      const users = await User.find().select('-password');
+      res.status(200).json({ success: true, data: users });
+    } catch (err) {
+      res.status(500).json({ success: false, error: err.message });
+    }
+  };
+
 // Update a user by ID (admin only)
 exports.updateUser = async (req, res) => {
   try {

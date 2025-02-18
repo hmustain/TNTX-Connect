@@ -4,10 +4,10 @@
   "main": "index.js",
   "scripts": {
     "test": "jest --watchAll",
-    "seed:companies": "node server/seedCompanies.js",
-    "seed:users": "node server/seedUsers.js",
-    "seed:tickets": "node server/seedTickets.js",
-    "seed:chats": "node server/seedChats.js",
+    "seed:companies": "node seedCompanies.js",
+    "seed:users": "node seedUsers.js",
+    "seed:tickets": "node seedTickets.js",
+    "seed:chats": "node seedChats.js",
     "seed": "npm run seed:companies && npm run seed:users && npm run seed:tickets && npm run seed:chats"
   },
   "keywords": [],

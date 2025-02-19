@@ -25,21 +25,11 @@ exports.createTicket = async (req, res) => {
   }
 };
 
-// Get all tickets this is role based ie: drivers can only see their tickets, agents/admin can see all, company_user can only see tickets for their company
-exports.getTickets = async (req, res) => {
+// For Admins/Agents: Get all tickets
+exports.getAllTickets = async (req, res) => {
   try {
-    let tickets;
-
-    if (req.user.role === 'admin' || req.user.role === 'agent') {
-      // Admins and agents can see all tickets
-      tickets = await Ticket.find();
-    } else if (req.user.role === 'company_user') {
-      // Company users should only see tickets for their company
-      tickets = await Ticket.find({ company: req.user.company });
-    } else {
-      // Drivers should only see their own tickets
-      tickets = await Ticket.find({ user: req.user._id });
-    }
+    // No filtering based on user; return all tickets.
+    const tickets = await Ticket.find();
     res.status(200).json({
       success: true,
       data: tickets,
@@ -49,15 +39,15 @@ exports.getTickets = async (req, res) => {
   }
 };
 
-
-// Get tickets by authenticated user only (for drivers)
-exports.getMyTickets = async (req, res) => {
+// For Company Users: Get tickets for the company associated with the user
+exports.getCompanyTickets = async (req, res) => {
   try {
-    if (!req.user || !req.user._id) {
-      return res.status(400).json({ success: false, error: 'User not authenticated properly' });
+    // Check if the user is associated with a company
+    if (!req.user || !req.user.company) {
+      return res.status(400).json({ success: false, error: 'User is not assigned to a company' });
     }
-    // Convert req.user._id to string for comparison if needed
-    const tickets = await Ticket.find({ user: req.user._id.toString() });
+    // Find tickets that match the user's company
+    const tickets = await Ticket.find({ company: req.user.company });
     res.status(200).json({
       success: true,
       data: tickets,

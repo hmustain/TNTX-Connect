@@ -74,41 +74,102 @@ exports.getMyTickets = async (req, res) => {
 };
 
 
-// Get a single ticket by ID
+// Get a single ticket by ID with role-based access control
 exports.getTicketById = async (req, res) => {
   try {
     const ticket = await Ticket.findById(req.params.id);
     if (!ticket) {
       return res.status(404).json({ success: false, error: 'Ticket not found' });
     }
-    res.status(200).json({ success: true, data: ticket });
+
+    // Role-based access control:
+    if (req.user.role === 'admin' || req.user.role === 'agent') {
+      // Admins and agents can view any ticket
+      return res.status(200).json({ success: true, data: ticket });
+    } else if (req.user.role === 'driver') {
+      // Drivers can only view tickets that belong to them
+      if (ticket.user.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ success: false, error: 'Not authorized to view this ticket' });
+      }
+      return res.status(200).json({ success: true, data: ticket });
+    } else if (req.user.role === 'company_user') {
+      // Company users can only view tickets for their company
+      if (!req.user.company || ticket.company.toString() !== req.user.company.toString()) {
+        return res.status(403).json({ success: false, error: 'Not authorized to view this ticket' });
+      }
+      return res.status(200).json({ success: true, data: ticket });
+    } else {
+      return res.status(403).json({ success: false, error: 'Not authorized' });
+    }
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 };
 
-// Update a ticket by ID
+
+// Update a ticket by ID with role-based access control
 exports.updateTicket = async (req, res) => {
   try {
-    const ticket = await Ticket.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    const ticket = await Ticket.findById(req.params.id);
     if (!ticket) {
       return res.status(404).json({ success: false, error: 'Ticket not found' });
     }
-    res.status(200).json({ success: true, data: ticket });
+
+    // Role-based access for updates:
+    if (req.user.role === 'admin' || req.user.role === 'agent') {
+      // Admins/Agents can update any ticket
+    } else if (req.user.role === 'driver') {
+      // Drivers can update only their own tickets; you may add additional checks (e.g., time window)
+      if (ticket.user.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ success: false, error: 'Not authorized to update this ticket' });
+      }
+    } else if (req.user.role === 'company_user') {
+      // Company users can update only tickets for their company
+      if (!req.user.company || ticket.company.toString() !== req.user.company.toString()) {
+        return res.status(403).json({ success: false, error: 'Not authorized to update this ticket' });
+      }
+    } else {
+      return res.status(403).json({ success: false, error: 'Not authorized' });
+    }
+
+    // Proceed with the update if authorized
+    const updatedTicket = await Ticket.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+    res.status(200).json({ success: true, data: updatedTicket });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }
 };
 
-// Delete a ticket by ID
+
+// Delete a ticket by ID with role-based access control
 exports.deleteTicket = async (req, res) => {
   try {
-    const ticket = await Ticket.findByIdAndDelete(req.params.id);
+    const ticket = await Ticket.findById(req.params.id);
     if (!ticket) {
       return res.status(404).json({ success: false, error: 'Ticket not found' });
     }
+
+    // Role-based access for deletion:
+    if (req.user.role === 'admin' || req.user.role === 'agent') {
+      // Allowed
+    } else if (req.user.role === 'driver') {
+      // Drivers can delete only their own tickets
+      if (ticket.user.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ success: false, error: 'Not authorized to delete this ticket' });
+      }
+    } else if (req.user.role === 'company_user') {
+      // Company users can delete only tickets for their company
+      if (!req.user.company || ticket.company.toString() !== req.user.company.toString()) {
+        return res.status(403).json({ success: false, error: 'Not authorized to delete this ticket' });
+      }
+    } else {
+      return res.status(403).json({ success: false, error: 'Not authorized' });
+    }
+
+    await Ticket.findByIdAndDelete(req.params.id);
     res.status(200).json({ success: true, data: {} });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
 };
+

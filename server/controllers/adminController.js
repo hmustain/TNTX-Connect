@@ -12,28 +12,32 @@ exports.createUser = async (req, res) => {
   }
 };
 
-// Get all users (admin only)
+// Get all users (admin only) - populate company name
 exports.getUsers = async (req, res) => {
-    try {
-      const users = await User.find().select('-password');
-      res.status(200).json({ success: true, data: users });
-    } catch (err) {
-      res.status(500).json({ success: false, error: err.message });
-    }
-  };
-  
-  // Get a single user by ID (admin only)
+  try {
+    const users = await User.find()
+      .select('-password')
+      .populate('company', 'name');
+    res.status(200).json({ success: true, data: users });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
+
+// Get a single user by ID (admin only) - populate company name
 exports.getUserById = async (req, res) => {
-    try {
-      const user = await User.findById(req.params.id).select('-password');
-      if (!user) {
-        return res.status(404).json({ success: false, error: 'User not found' });
-      }
-      res.status(200).json({ success: true, data: user });
-    } catch (err) {
-      res.status(500).json({ success: false, error: err.message });
+  try {
+    const user = await User.findById(req.params.id)
+      .select('-password')
+      .populate('company', 'name');
+    if (!user) {
+      return res.status(404).json({ success: false, error: 'User not found' });
     }
-  };
+    res.status(200).json({ success: true, data: user });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
 
 // Update a user by ID (admin only)
 exports.updateUser = async (req, res) => {
@@ -61,12 +65,10 @@ exports.deleteUser = async (req, res) => {
   }
 };
 
-  
 // Change a user's role (admin only)
 exports.changeUserRole = async (req, res) => {
   try {
     const { role } = req.body;
-    // Optionally validate that role is one of the allowed roles
     const user = await User.findByIdAndUpdate(req.params.id, { role }, { new: true, runValidators: true });
     if (!user) {
       return res.status(404).json({ success: false, error: 'User not found' });
@@ -93,26 +95,26 @@ exports.setUserActiveStatus = async (req, res) => {
 
 // Get all companies (admin only)
 exports.getCompanies = async (req, res) => {
-    try {
-      const companies = await Company.find();
-      res.status(200).json({ success: true, data: companies });
-    } catch (err) {
-      res.status(500).json({ success: false, error: err.message });
-    }
-  };
+  try {
+    const companies = await Company.find();
+    res.status(200).json({ success: true, data: companies });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
 
-  // Get a single company by ID (admin only)
+// Get a single company by ID (admin only)
 exports.getCompanyById = async (req, res) => {
-    try {
-      const company = await Company.findById(req.params.id);
-      if (!company) {
-        return res.status(404).json({ success: false, error: 'Company not found' });
-      }
-      res.status(200).json({ success: true, data: company });
-    } catch (err) {
-      res.status(500).json({ success: false, error: err.message });
+  try {
+    const company = await Company.findById(req.params.id);
+    if (!company) {
+      return res.status(404).json({ success: false, error: 'Company not found' });
     }
-  };
+    res.status(200).json({ success: true, data: company });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+};
 
 // Create a new company (admin only)
 exports.createCompany = async (req, res) => {

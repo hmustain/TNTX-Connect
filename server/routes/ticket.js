@@ -3,30 +3,37 @@
   const router = express.Router();
   const {
     createTicket,
-    getTickets,
     getTicketById,
     updateTicket,
     deleteTicket,
-    getMyTickets
+    getMyTickets,
+    getAllTickets,
+    getCompanyTickets
   } = require('../controllers/ticketController');
   const { protect } = require('../middleware/auth');
 
-  // Create a ticket
-  router.post('/', protect, createTicket);
+  // Use protect middleware to require authentication to all routes in this router
+  router.use(protect);
 
-  // Get all tickets
-  router.get('/', protect, getTickets);
+  // Create a ticket
+  router.post('/', createTicket);
+
+  // Get all tickets (admin/agents)
+  router.get('/', getAllTickets);
 
   // Get ticket by authenticated user (driver)
-  router.get('/mytickets', protect, getMyTickets);
+  router.get('/mytickets', getMyTickets);
+
+  //Get tickets by associated with company (for company users)
+  router.get('/company', getCompanyTickets);
 
   // Get single ticket by ID
-  router.get('/:id', protect, getTicketById);
+  router.get('/:id', getTicketById);
 
   // Update ticket by ID
-  router.put('/:id', protect, updateTicket);
+  router.put('/:id', updateTicket);
 
   // Delete ticket by ID
-  router.delete('/:id', protect, deleteTicket);
+  router.delete('/:id', deleteTicket);
 
   module.exports = router;

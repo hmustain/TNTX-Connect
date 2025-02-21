@@ -2,16 +2,24 @@
 const Chat = require('../models/Chat');
 const Ticket = require('../models/Ticket');
 
-// Create a new chat message
+// Create a new chat
 exports.createChat = async (req, res) => {
   try {
     const chatData = req.body;
+    // Retrieve the ticket to get its associated company
+    const ticket = await Ticket.findById(chatData.ticket);
+    if (!ticket) {
+      return res.status(404).json({ success: false, error: 'Ticket not found' });
+    }
+    // Assign the company from the ticket to the chat message
+    chatData.company = ticket.company;
     const chat = await Chat.create(chatData);
     res.status(201).json({ success: true, data: chat });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }
 };
+
 
 // Get all chat messages for a given ticket with role-based access control
 exports.getChatsByTicket = async (req, res) => {

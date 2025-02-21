@@ -1,16 +1,21 @@
 // server/routes/chat.js
 const express = require('express');
 const router = express.Router();
-const { createChat, getChatsByTicket } = require('../controllers/chatController');
+const { createChat, getChatsByTicket, getAllChats, getMyChats, getCompanyChats } = require('../controllers/chatController');
 const { protect } = require('../middleware/auth');
 
-// Use protect middlewawre for require authentication in this route
+// All routes here require authentication
 router.use(protect);
 
 // Create a chat message
 router.post('/', createChat);
 
-// Get chat messages by ticket ID
+// Get chat messages by ticket ID (accessible by authorized roles)
 router.get('/ticket/:ticketId', getChatsByTicket);
+
+// Additional endpoints for chat:
+router.get('/all', getAllChats);          // Admins/Agents only
+router.get('/mychats', getMyChats);         // Drivers only
+router.get('/company', getCompanyChats);    // Company Users only
 
 module.exports = router;

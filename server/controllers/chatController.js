@@ -1,5 +1,6 @@
 // server/controllers/chatController.js
 const Chat = require('../models/Chat');
+const Ticket = require('../models/Ticket');
 
 // Create a new chat message
 exports.createChat = async (req, res) => {

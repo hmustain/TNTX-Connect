@@ -25,11 +25,12 @@ exports.createTicket = async (req, res) => {
   }
 };
 
-// For Admins/Agents: Get all tickets
+// For Admins/Agents: Get all tickets (with populated fields)
 exports.getAllTickets = async (req, res) => {
   try {
-    // No filtering based on user; return all tickets.
-    const tickets = await Ticket.find();
+    const tickets = await Ticket.find()
+      .populate('user', 'name')
+      .populate('company', 'name');
     res.status(200).json({
       success: true,
       data: tickets,
@@ -42,12 +43,12 @@ exports.getAllTickets = async (req, res) => {
 // For Company Users: Get tickets for the company associated with the user
 exports.getCompanyTickets = async (req, res) => {
   try {
-    // Check if the user is associated with a company
     if (!req.user || !req.user.company) {
       return res.status(400).json({ success: false, error: 'User is not assigned to a company' });
     }
-    // Find tickets that match the user's company
-    const tickets = await Ticket.find({ company: req.user.company });
+    const tickets = await Ticket.find({ company: req.user.company })
+      .populate('user', 'name')
+      .populate('company', 'name');
     res.status(200).json({
       success: true,
       data: tickets,
@@ -63,7 +64,9 @@ exports.getMyTickets = async (req, res) => {
     if (!req.user || !req.user._id) {
       return res.status(400).json({ success: false, error: 'User not authenticated properly' });
     }
-    const tickets = await Ticket.find({ user: req.user._id });
+    const tickets = await Ticket.find({ user: req.user._id })
+      .populate('user', 'name')
+      .populate('company', 'name');
     res.status(200).json({
       success: true,
       data: tickets,
@@ -73,28 +76,25 @@ exports.getMyTickets = async (req, res) => {
   }
 };
 
-
-// Get a single ticket by ID with role-based access control
+// Get a single ticket by ID with role-based access control and populated fields
 exports.getTicketById = async (req, res) => {
   try {
-    const ticket = await Ticket.findById(req.params.id);
+    const ticket = await Ticket.findById(req.params.id)
+      .populate('user', 'name')
+      .populate('company', 'name');
     if (!ticket) {
       return res.status(404).json({ success: false, error: 'Ticket not found' });
     }
 
-    // Role-based access control:
     if (req.user.role === 'admin' || req.user.role === 'agent') {
-      // Admins and agents can view any ticket
       return res.status(200).json({ success: true, data: ticket });
     } else if (req.user.role === 'driver') {
-      // Drivers can only view tickets that belong to them
-      if (ticket.user.toString() !== req.user._id.toString()) {
+      if (ticket.user._id.toString() !== req.user._id.toString()) {
         return res.status(403).json({ success: false, error: 'Not authorized to view this ticket' });
       }
       return res.status(200).json({ success: true, data: ticket });
     } else if (req.user.role === 'company_user') {
-      // Company users can only view tickets for their company
-      if (!req.user.company || ticket.company.toString() !== req.user.company.toString()) {
+      if (!req.user.company || ticket.company._id.toString() !== req.user.company.toString()) {
         return res.status(403).json({ success: false, error: 'Not authorized to view this ticket' });
       }
       return res.status(200).json({ success: true, data: ticket });

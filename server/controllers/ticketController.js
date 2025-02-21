@@ -28,6 +28,10 @@ exports.createTicket = async (req, res) => {
 // For Admins/Agents: Get all tickets (with populated fields)
 exports.getAllTickets = async (req, res) => {
   try {
+    // Check that the user is an admin or agent
+    if (req.user.role !== 'admin' && req.user.role !== 'agent') {
+      return res.status(403).json({ success: false, error: 'Not authorized to view all tickets' });
+    }
     const tickets = await Ticket.find()
       .populate('user', 'name')
       .populate('company', 'name');

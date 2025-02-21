@@ -47,6 +47,10 @@ exports.getChatsByTicket = async (req, res) => {
 // For Admins/Agents: Get all chat messages
 exports.getAllChats = async (req, res) => {
   try {
+    // Only allow access if the user is an admin or agent.
+    if (req.user.role !== 'admin' && req.user.role !== 'agent') {
+      return res.status(403).json({ success: false, error: 'Not authorized to view all chats' });
+    }
     const chats = await Chat.find()
       .populate('ticket', 'ticketNumber')
       .populate('sender', 'name');

@@ -1,28 +1,39 @@
-// server/routes/ticket.js
-const express = require('express');
-const router = express.Router();
-const {
-  createTicket,
-  getTickets,
-  getTicketById,
-  updateTicket,
-  deleteTicket,
-} = require('../controllers/ticketController');
-const { protect } = require('../middleware/auth');
+  // server/routes/ticket.js
+  const express = require('express');
+  const router = express.Router();
+  const {
+    createTicket,
+    getTicketById,
+    updateTicket,
+    deleteTicket,
+    getMyTickets,
+    getAllTickets,
+    getCompanyTickets
+  } = require('../controllers/ticketController');
+  const { protect } = require('../middleware/auth');
 
-// Create a ticket
-router.post('/', protect, createTicket);
+  // Use protect middleware to require authentication to all routes in this router
+  router.use(protect);
 
-// Get all tickets
-router.get('/', protect, getTickets);
+  // Create a ticket
+  router.post('/', createTicket);
 
-// Get single ticket by ID
-router.get('/:id', protect, getTicketById);
+  // Get all tickets (admin/agents)
+  router.get('/', getAllTickets);
 
-// Update ticket by ID
-router.put('/:id', protect, updateTicket);
+  // Get ticket by authenticated user (driver)
+  router.get('/mytickets', getMyTickets);
 
-// Delete ticket by ID
-router.delete('/:id', protect, deleteTicket);
+  //Get tickets by associated with company (for company users)
+  router.get('/company', getCompanyTickets);
 
-module.exports = router;
+  // Get single ticket by ID
+  router.get('/:id', getTicketById);
+
+  // Update ticket by ID
+  router.put('/:id', updateTicket);
+
+  // Delete ticket by ID
+  router.delete('/:id', deleteTicket);
+
+  module.exports = router;

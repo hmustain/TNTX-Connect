@@ -13,8 +13,19 @@ let token, testUser, testCompany, testTicket;
 
 beforeAll(async () => {
   await connectDB();
+  // Create a test company once for all tests.
+  testCompany = await Company.create({ name: 'Chat Protected Company' });
+});
 
-  // Register a test user and retrieve the token
+beforeEach(async () => {
+  // Clear out chats and tickets between tests.
+  await Chat.deleteMany({});
+  await Ticket.deleteMany({});
+  
+  // Delete any existing test users with emails starting with "chatprotected_"
+  await User.deleteMany({ email: { $regex: '^chatprotected_' } });
+
+  // Re-register the test user and update token.
   const userRes = await request(app)
     .post('/api/auth/register')
     .send({
@@ -25,18 +36,12 @@ beforeAll(async () => {
   token = userRes.body.token;
   testUser = userRes.body.data;
 
-  // Create a test company
-  testCompany = await Company.create({ name: 'Chat Protected Company' });
-});
-
-beforeEach(async () => {
-  // Clear out chats and tickets between tests
-  await Chat.deleteMany({});
-  await Ticket.deleteMany({});
-
-  // Create a test ticket for chat tests
+  // Create a test ticket for chat tests with a unique ticket number.
+  const uniqueTicketNumber = (Math.floor(Math.random() * 100000))
+    .toString()
+    .padStart(5, '0');
   testTicket = await Ticket.create({
-    ticketNumber: '00003',
+    ticketNumber: uniqueTicketNumber,
     user: testUser._id,
     company: testCompany._id,
     truckNumber: 'TX2001',

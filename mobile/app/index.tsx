@@ -1,6 +1,6 @@
 import React from 'react';
-import IntroScreen from '../components/IntroScreen';
+import SignInScreen from '../components/SignInScreen';
 
 export default function App() {
-  return <IntroScreen />;
+  return <SignInScreen />;
 }

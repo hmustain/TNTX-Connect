@@ -1,52 +1,88 @@
-import React from 'react';
-import { SafeAreaView, View, Text, Image, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import {
+  SafeAreaView,
+  View,
+  Text,
+  TouchableOpacity,
+  ImageBackground,
+} from 'react-native';
 import styles from './styles/LandingScreen.styles';
 
 const LandingScreen = () => {
-  // Simulate authentication status and user data
-  const isAuthenticated = true; // Change to true for logged-in state
+  const [activeTab, setActiveTab] = useState('Home');
   const user = {
-    name: 'Hunter',
-    company: 'TNTX Solutions.',
+    firstName: 'Hunter',
   };
 
-  // Import your logo image from your assets folder (adjust the path if needed)
-  const logo = require('../assets/images/TNTX-SOLUTIONS-LOGO.png');
+  // Adjust the path to your background image as needed.
+  const backgroundImage = require('../assets/images/TNTX-Connect-Mobile.jpeg');
+
+  const tabs = [
+    { label: 'Live Tickets', icon: 'construct-outline' },
+    { label: 'Past Tickets', icon: 'documents-outline' },
+    { label: 'Home', icon: 'home-outline' },
+    { label: 'New Ticket', icon: 'add-circle-outline' },
+    { label: 'View Profile', icon: 'person-outline' },
+  ];
+  
+
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'Live Tickets':
+        return <Text style={styles.contentText}>Active Tickets content goes here.</Text>;
+      case 'Past Tickets':
+        return <Text style={styles.contentText}>Past Tickets content goes here.</Text>;
+      case 'New Ticket':
+        return <Text style={styles.contentText}>New Ticket content goes here.</Text>;
+      case 'View Profile':
+        return <Text style={styles.contentText}>User Profile content goes here.</Text>;
+      case 'Home':
+      default:
+        return (
+          <View style={styles.homeContent}>
+            <Text style={styles.welcomeText}>Welcome, {user.firstName}!</Text>
+            <TouchableOpacity style={styles.ctaButton}>
+              <Text style={styles.ctaButtonText}>Start New Ticket</Text>
+            </TouchableOpacity>
+          </View>
+        );
+    }
+  };
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        {/* Left side: Logo and Portal Title arranged in a column */}
-        <View style={styles.headerLeft}>
-          <Image source={logo} style={styles.logo} resizeMode="contain" />
-          <Text style={styles.headerTitle}>Customer Portal</Text>
-        </View>
-        {/* Right side: User Info or Login/Register */}
-        <View style={styles.headerRight}>
-          {isAuthenticated ? (
-            <View style={styles.userInfo}>
-              <Text style={styles.userText}>Hello, {user.name}</Text>
-              <Text style={styles.userSubText}>{user.company}</Text>
-              <TouchableOpacity>
-                <Text style={styles.linkText}>View Profile</Text>
-              </TouchableOpacity>
-              <TouchableOpacity>
-                <Text style={styles.linkText}>Log Out</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <TouchableOpacity style={styles.loginButton}>
-              <Text style={styles.loginButtonText}>Login / Register</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
+      <ImageBackground
+        source={backgroundImage}
+        style={styles.backgroundImage}
+        resizeMode="cover"
+      >
+        <View style={styles.overlay}>
+          <View style={styles.contentContainer}>
+            {renderContent()}
+          </View>
 
-      {/* Main Content */}
-      <View style={styles.mainContent}>
-        <Text style={styles.contentText}>Welcome to the Landing Screen for TNTX Mobile</Text>
-      </View>
+          {/* Updated Bottom Navigation with Icons */}
+          <View style={styles.bottomNav}>
+            {tabs.map((tab) => (
+              <TouchableOpacity
+                key={tab.label}
+                style={styles.tabItem}
+                onPress={() => setActiveTab(tab.label)}
+              >
+                <Ionicons
+                  name={tab.icon as any}  // Cast to any to bypass union type check
+                  size={24}
+                  color={activeTab === tab.label ? '#000' : '#555'}
+                />
+                <Text style={[styles.tabText, activeTab === tab.label && styles.activeTabText]}>
+                  {tab.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </ImageBackground>
     </SafeAreaView>
   );
 };

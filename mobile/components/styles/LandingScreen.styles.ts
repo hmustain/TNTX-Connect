@@ -3,69 +3,64 @@ import { StyleSheet } from 'react-native';
 export default StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
   },
-  header: {
-    backgroundColor: '#000', // Black header background
-    paddingVertical: 15,
-    paddingHorizontal: 20, // Adds space on the sides
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  headerLeft: {
+  backgroundImage: {
     flex: 1,
-    flexDirection: 'column',  // Change to column for vertical stacking
-    alignItems: 'flex-start',  // Align to left
   },
-  logo: {
-    width: 100,  // Adjust the logo size as needed
-    height: 30,
-    marginBottom: 4, // Space between logo and title
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)', // Semi-transparent overlay for readability
+    justifyContent: 'space-between',
   },
-  headerTitle: {
-    fontSize: 14, // Smaller font for the title
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  headerRight: {
-    flex: 0.4, // Ensure this section takes up enough space
-    alignItems: 'flex-end',
-  },
-  userInfo: {
-    alignItems: 'flex-end',
-  },
-  userText: {
-    color: '#fff',
-    fontSize: 14,
-  },
-  userSubText: {
-    color: '#fff',
-    fontSize: 12,
-  },
-  linkText: {
-    color: '#fff',
-    fontSize: 14,
-    marginTop: 4,
-  },
-  loginButton: {
-    backgroundColor: '#fff',
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 4,
-  },
-  loginButtonText: {
-    color: '#000',
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  mainContent: {
+  contentContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
   },
+  homeContent: {
+    alignItems: 'center',
+  },
+  welcomeText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 20,
+  },
+  ctaButton: {
+    backgroundColor: '#fff',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+  },
+  ctaButtonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
   contentText: {
     fontSize: 16,
+    color: '#fff',
+  },
+  bottomNav: {
+    flexDirection: 'row',
+    borderTopWidth: 1,
+    borderTopColor: '#ccc',
+    backgroundColor: 'rgba(248,248,248,0.9)',
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 8,
+  },
+  tabText: {
+    fontSize: 12,
+    color: '#555',
+    marginTop: 4,
+    textAlign: 'center'
+  },
+  activeTabText: {
+    color: '#000',
+    fontWeight: 'bold',
   },
 });

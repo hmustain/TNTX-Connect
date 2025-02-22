@@ -1,6 +1,6 @@
 import React from 'react';
-import SignUpScreen from '../components/SignUpScreen';
+import LandingScreen from '../components/LandingScreen';
 
 export default function App() {
-  return <SignUpScreen />;
+  return <LandingScreen />;
 }

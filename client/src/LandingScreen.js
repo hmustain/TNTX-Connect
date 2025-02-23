@@ -1,17 +1,27 @@
-import React, { useState } from 'react';
-import useTickets from './hooks/useTickets';
-import { Navbar, Container, Nav, Button, Row, Col, Table } from 'react-bootstrap';
+import React from "react";
+import useTickets from "./hooks/useTickets";
+import {
+  Navbar,
+  Container,
+  Nav,
+  Button,
+  Row,
+  Col,
+  Table,
+} from "react-bootstrap";
 
 const LandingScreen = () => {
   // Simulate authentication status and user data
   const isAuthenticated = true;
+  // Simulated user object (adjust these values based on your seed output)
   const user = {
-    id: 101,
-    name: "Hunter",
+    id: "60c72b2f5f1b2c001c8a4e01", // Replace with an actual seeded ObjectID
+    name: "Hunter Mustain",
     company: "TNTX Solutions",
-    role: "admin", // Change to "driver" or "company" as needed.
+    role: "admin", // Try "driver" or "company_user" to simulate different views
   };
 
+  // Use the user object in your hook.
   const { tickets, loading } = useTickets(user);
 
   return (
@@ -27,7 +37,14 @@ const LandingScreen = () => {
                 src="/images/TNTX-SOLUTIONS-LOGO.png"
                 style={{ width: "150px", height: "auto", marginRight: "10px" }}
               />
-              <span className="text-white" style={{ fontSize: "1.5rem", fontWeight: "bold", lineHeight: "1.2" }}>
+              <span
+                className="text-white"
+                style={{
+                  fontSize: "1.5rem",
+                  fontWeight: "bold",
+                  lineHeight: "1.2",
+                }}
+              >
                 TNTX Connect Portal
               </span>
             </div>
@@ -63,18 +80,30 @@ const LandingScreen = () => {
               {/* Primary Call-to-Action Buttons Row */}
               <Row className="mb-3">
                 <Col>
-                  <Button variant="secondary" className="me-2 mb-2">Active Tickets</Button>
-                  <Button variant="secondary" className="me-2 mb-2">Historical Tickets</Button>
-                  <Button variant="secondary" className="me-2 mb-2">Chat with an Agent</Button>
-                  <Button variant="secondary" className="me-2 mb-2">Submit a Breakdown Ticket</Button>
+                  <Button variant="secondary" className="me-2 mb-2">
+                    Active Tickets
+                  </Button>
+                  <Button variant="secondary" className="me-2 mb-2">
+                    Historical Tickets
+                  </Button>
+                  <Button variant="secondary" className="me-2 mb-2">
+                    Chat with an Agent
+                  </Button>
+                  <Button variant="secondary" className="me-2 mb-2">
+                    Submit a Breakdown Ticket
+                  </Button>
                 </Col>
               </Row>
 
               {/* Additional Call-to-Action Row */}
               <Row className="align-items-center mb-3">
                 <Col>
-                  <Button variant="outline-primary" className="me-2">Action Needed Work Orders</Button>
-                  <Button variant="outline-primary">All Active Work Orders</Button>
+                  <Button variant="outline-primary" className="me-2">
+                    Action Needed Work Orders
+                  </Button>
+                  <Button variant="outline-primary">
+                    All Active Work Orders
+                  </Button>
                 </Col>
                 <Col className="text-end">
                   <Button variant="outline-secondary">Filter</Button>
@@ -101,26 +130,30 @@ const LandingScreen = () => {
                 <tbody>
                   {loading ? (
                     <tr>
-                      <td colSpan="11" className="text-center">Loading...</td>
+                      <td colSpan="11" className="text-center">
+                        Loading...
+                      </td>
                     </tr>
                   ) : tickets.length === 0 ? (
                     <tr>
-                      <td colSpan="11" className="text-center">No work orders available.</td>
+                      <td colSpan="11" className="text-center">
+                        No work orders available.
+                      </td>
                     </tr>
                   ) : (
-                    tickets.map(ticket => (
-                      <tr key={ticket.id}>
-                        <td>{ticket.workOrderNumber}</td>
-                        <td>{ticket.unitType}</td>
-                        <td>{ticket.tractorNumber}</td>
+                    tickets.map((ticket) => (
+                      <tr key={ticket._id}>
+                        <td>{ticket.ticketNumber}</td>
+                        <td>{ticket.unitAffected}</td>
+                        <td>{ticket.truckNumber}</td>
                         <td>{ticket.trailerNumber}</td>
-                        <td>{ticket.complaintType}</td>
-                        <td>{ticket.location}</td>
-                        <td>{ticket.fleetRep}</td>
-                        <td>{ticket.authNumber}</td>
-                        <td>{ticket.date}</td>
-                        <td>{ticket.timeElapsed}</td>
-                        <td>{ticket.status}</td>
+                        <td>{ticket.complaint}</td>
+                        <td>{ticket.currentLocation}</td>
+                        <td>{"John Doe"}</td> {/* Hard-coded Fleet Rep */}
+                        <td>{"AUTH-1234"}</td> {/* Hard-coded Auth # */}
+                        <td>{new Date(ticket.createdAt).toLocaleDateString()}</td>
+                        <td>{"2 hrs ago"}</td> {/* Hard-coded Time Elapsed */}
+                        <td>{"Pending"}</td> {/* Hard-coded Status */}
                       </tr>
                     ))
                   )}
@@ -131,8 +164,12 @@ const LandingScreen = () => {
             // Logged-out view: only instructions to log in/register
             <div className="text-center py-5">
               <h4>Please log in to view work orders.</h4>
-              <p>Login or register an account to access and manage your work orders.</p>
-              <Button variant="dark" className="mt-3">Login / Register</Button>
+              <p>
+                Login or register an account to access and manage your work orders.
+              </p>
+              <Button variant="dark" className="mt-3">
+                Login / Register
+              </Button>
             </div>
           )}
         </Container>

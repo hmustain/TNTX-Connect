@@ -1,13 +1,18 @@
-import React from 'react';
+import React, { useState } from 'react';
+import useTickets from './hooks/useTickets';
 import { Navbar, Container, Nav, Button, Row, Col, Table } from 'react-bootstrap';
 
 const LandingScreen = () => {
   // Simulate authentication status and user data
   const isAuthenticated = true;
   const user = {
-    name: "John Doe",
-    company: "TNTX Inc.",
+    id: 101,
+    name: "Hunter",
+    company: "TNTX Solutions",
+    role: "admin", // Change to "driver" or "company" as needed.
   };
+
+  const { tickets, loading } = useTickets(user);
 
   return (
     <div className="d-flex flex-column min-vh-100">
@@ -94,10 +99,31 @@ const LandingScreen = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {/* Replace with dynamic rows */}
-                  <tr>
-                    <td colSpan="11" className="text-center">No work orders available.</td>
-                  </tr>
+                  {loading ? (
+                    <tr>
+                      <td colSpan="11" className="text-center">Loading...</td>
+                    </tr>
+                  ) : tickets.length === 0 ? (
+                    <tr>
+                      <td colSpan="11" className="text-center">No work orders available.</td>
+                    </tr>
+                  ) : (
+                    tickets.map(ticket => (
+                      <tr key={ticket.id}>
+                        <td>{ticket.workOrderNumber}</td>
+                        <td>{ticket.unitType}</td>
+                        <td>{ticket.tractorNumber}</td>
+                        <td>{ticket.trailerNumber}</td>
+                        <td>{ticket.complaintType}</td>
+                        <td>{ticket.location}</td>
+                        <td>{ticket.fleetRep}</td>
+                        <td>{ticket.authNumber}</td>
+                        <td>{ticket.date}</td>
+                        <td>{ticket.timeElapsed}</td>
+                        <td>{ticket.status}</td>
+                      </tr>
+                    ))
+                  )}
                 </tbody>
               </Table>
             </>

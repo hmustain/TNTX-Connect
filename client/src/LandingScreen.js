@@ -109,7 +109,6 @@ const LandingScreen = () => {
                   <Button variant="outline-secondary">Filter</Button>
                 </Col>
               </Row>
-
               {/* Work Orders Table */}
               <Table striped bordered hover responsive>
                 <thead>
@@ -129,17 +128,9 @@ const LandingScreen = () => {
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr>
-                      <td colSpan="11" className="text-center">
-                        Loading...
-                      </td>
-                    </tr>
+                    <tr><td colSpan="11" className="text-center">Loading...</td></tr>
                   ) : tickets.length === 0 ? (
-                    <tr>
-                      <td colSpan="11" className="text-center">
-                        No work orders available.
-                      </td>
-                    </tr>
+                    <tr><td colSpan="11" className="text-center">No work orders available.</td></tr>
                   ) : (
                     tickets.map((ticket) => (
                       <tr key={ticket._id}>

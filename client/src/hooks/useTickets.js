@@ -7,13 +7,20 @@ const useTickets = (user) => {
   useEffect(() => {
     const fetchTickets = async () => {
       try {
-        const response = await fetch('/api/tickets');
+        const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY3YmE4NzE1ZGU0ZmZkNjIzZDFhZjFhYSIsImlhdCI6MTc0MDI3NzY2MCwiZXhwIjoxNzQyODY5NjYwfQ.qRSySMLOy42OBOn8Hja44rMgVP0nWS_aSqe0dr3_q7M"; // Replace with your actual token
+        const response = await fetch('/api/tickets', {
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
+        });
         const data = await response.json();
-        let filteredTickets = data;
+        const ticketArray = Array.isArray(data.data) ? data.data : [];
+        let filteredTickets = ticketArray;
         if (user.role === "driver") {
-          filteredTickets = data.filter(ticket => ticket.driverId === user.id);
+          filteredTickets = ticketArray.filter(ticket => ticket.user._id === user.id);
         } else if (user.role === "company") {
-          filteredTickets = data.filter(ticket => ticket.company === user.company);
+          filteredTickets = ticketArray.filter(ticket => ticket.company.name === user.company);
         }
         setTickets(filteredTickets);
       } catch (error) {

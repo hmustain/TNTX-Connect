@@ -1,13 +1,21 @@
-import logo from './logo.svg';
-import './App.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import LandingScreen from './LandingScreen';
+import React, { useContext } from 'react';
+import { AuthProvider } from './context/AuthContext';
+import AuthContext from './context/AuthContext';
+import LandingScreen from './components/LandingScreen';
+import LoginScreen from './components/LoginScreen';
+
+function AppContent() {
+  const { authData, loading } = useContext(AuthContext);
+
+  if (loading) return <div>Loading...</div>;
+  return authData ? <LandingScreen /> : <LoginScreen />;
+}
 
 function App() {
   return (
-    <div>
-      <LandingScreen />
-    </div>
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 

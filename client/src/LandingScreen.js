@@ -1,27 +1,14 @@
 import React from "react";
 import useTickets from "./hooks/useTickets";
-import {
-  Navbar,
-  Container,
-  Nav,
-  Button,
-  Row,
-  Col,
-  Table,
-} from "react-bootstrap";
+import { Navbar, Container, Nav, Button, Row, Col, Table } from "react-bootstrap";
+import useCurrentUser from "./hooks/useCurrentUser";
 
 const LandingScreen = () => {
-  // Simulate authentication status and user data
-  const isAuthenticated = true;
-  // Simulated user object (adjust these values based on your seed output)
-  const user = {
-    id: "60c72b2f5f1b2c001c8a4e01", // Replace with an actual seeded ObjectID
-    name: "Hunter Mustain",
-    company: "TNTX Solutions",
-    role: "admin", // Try "driver" or "company_user" to simulate different views
-  };
-
-  // Use the user object in your hook.
+  const user = useCurrentUser();
+  if (!user) {
+    return <div>Loading user data...</div>;
+  }
+  const isAuthenticated = true; // Or derive from the user object if needed
   const { tickets, loading } = useTickets(user);
 
   return (

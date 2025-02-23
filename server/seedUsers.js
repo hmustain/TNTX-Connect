@@ -59,36 +59,36 @@ const seedUsers = async () => {
     await adminUser.save();
     createdUsers.push(adminUser);
 
-    // For each allowed company, create 5 drivers and 1 company user.
-    for (const companyName of allowedCompanyNames) {
-      const comp = companyMap[companyName];
-      
-      // Create 5 drivers for this company
-      for (let i = 1; i <= 5; i++) {
-        const driverData = {
-          name: `${companyName.split(" ")[0]} Driver ${i}`,
-          email: `${companyName.split(" ")[0].toLowerCase()}-driver${i}@example.com`,
-          password: "Test@1234",
-          role: "driver",
-          company: comp._id
-        };
-        const driver = new User(driverData);
-        await driver.save();
-        createdUsers.push(driver);
-      }
-      
-      // Create 1 company user for this company
-      const companyUserData = {
-        name: `${companyName.split(" ")[0]} User 1`,
-        email: `${companyName.split(" ")[0].toLowerCase()}-user@example.com`,
-        password: "Test@1234",
-        role: "company_user",
-        company: comp._id
-      };
-      const companyUser = new User(companyUserData);
-      await companyUser.save();
-      createdUsers.push(companyUser);
-    }
+   // For each allowed company, create 5 drivers and 1 company user.
+for (const companyName of allowedCompanyNames) {
+  const comp = companyMap[companyName];
+  
+  // Create 5 drivers for this company
+  for (let i = 1; i <= 5; i++) {
+    const driverData = {
+      name: `${companyName.split(" ")[0]} Driver ${i}`,
+      email: `${companyName.split(" ")[0].toLowerCase()}driver${i}@example.com`,
+      password: "Test@1234",
+      role: "driver",
+      company: comp._id
+    };
+    const driver = new User(driverData);
+    await driver.save();
+    createdUsers.push(driver);
+  }
+  
+  // Create 1 company user for this company
+  const companyUserData = {
+    name: `${companyName.split(" ")[0]} User 1`,
+    email: `${companyName.split(" ")[0].toLowerCase()}user1@example.com`,
+    password: "Test@1234",
+    role: "company_user",
+    company: comp._id
+  };
+  const companyUser = new User(companyUserData);
+  await companyUser.save();
+  createdUsers.push(companyUser);
+}
 
     console.log("Seeded Users:");
     createdUsers.forEach(user => {

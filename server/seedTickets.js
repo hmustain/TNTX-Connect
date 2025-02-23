@@ -5,6 +5,17 @@ const connectDB = require('./config/db');
 const Ticket = require('./models/Ticket');
 const User = require('./models/User');
 
+const generateUniqueTicketNumber = (existingNumbers) => {
+  let ticketNumber;
+  do {
+    ticketNumber = Math.floor(Math.random() * 100000)
+      .toString()
+      .padStart(5, '0');
+  } while (existingNumbers.has(ticketNumber));
+  existingNumbers.add(ticketNumber);
+  return ticketNumber;
+};
+
 const seedTickets = async () => {
   try {
     await connectDB();
@@ -14,8 +25,8 @@ const seedTickets = async () => {
 
     // Retrieve all drivers (users with role 'driver')
     const drivers = await User.find({ role: 'driver' });
-
     const ticketPromises = [];
+    const generatedTicketNumbers = new Set();
 
     // For each driver, create 5 tickets using the driver's company
     for (const driver of drivers) {
@@ -25,22 +36,24 @@ const seedTickets = async () => {
         continue;
       }
       for (let i = 1; i <= 5; i++) {
-        // Generate a random 5-digit ticket number
-        const randomTicketNumber = Math.floor(Math.random() * 100000)
-          .toString()
-          .padStart(5, '0');
+        const randomTicketNumber = generateUniqueTicketNumber(generatedTicketNumbers);
 
         const ticketData = {
           ticketNumber: randomTicketNumber,
           user: driver._id,         // Associate the ticket with the driver
           company: driver.company,  // Use the driver's company
           truckNumber: `TX${Math.floor(Math.random() * 10000)}`,
-          vinLast8: 'VIN' + Math.floor(Math.random() * 10000000).toString().padStart(8, '0'),
+          vinLast8:
+            'VIN' +
+            Math.floor(Math.random() * 10000000)
+              .toString()
+              .padStart(8, '0'),
           mileage: Math.floor(Math.random() * 200000),
           trailerNumber: `TR${Math.floor(Math.random() * 10000)}`,
           // Alternate loadStatus for variety
           loadStatus: i % 2 === 0 ? 'loaded' : 'empty',
-          loadNumber: i % 2 === 0 ? `LOAD${Math.floor(Math.random() * 10000)}` : undefined,
+          loadNumber:
+            i % 2 === 0 ? `LOAD${Math.floor(Math.random() * 10000)}` : undefined,
           complaint: `Complaint ${i} for ${driver.name}: Engine overheating or brake failure.`,
           currentLocation: 'Test Location',
           // Additional fields

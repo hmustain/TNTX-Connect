@@ -1,5 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { Form, Button, Container, Alert } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 
 const LoginScreen = () => {
@@ -7,6 +8,7 @@ const LoginScreen = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,15 +25,15 @@ const LoginScreen = () => {
       
       const data = await response.json();
       
-      // Assuming your login endpoint returns:
-      // { success: true, data: { user: { ... } }, token: 'JWT_TOKEN' }
+      // Save token and user data in AuthContext
       localStorage.setItem('authToken', data.token);
       setAuthData({
         token: data.token,
         user: data.data,
       });
       
-      // Optionally, redirect the user to the LandingScreen after login.
+      // Redirect to home after successful login
+      navigate("/");
     } catch (err) {
       setError(err.message);
     }
@@ -60,7 +62,7 @@ const LoginScreen = () => {
             onChange={(e) => setPassword(e.target.value)}
           />
         </Form.Group>
-        <Button variant="primary" type="submit">
+        <Button variant="dark" type="submit">
           Login
         </Button>
       </Form>

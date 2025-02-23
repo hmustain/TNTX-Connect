@@ -54,11 +54,17 @@ const LandingScreen = () => {
                 <div className="text-end text-white">
                   <div>Hello, {user.name}</div>
                   <div className="small">{user.company}</div>
-                  <Button variant="link" className="p-0 text-white hover-underline">
+                  <Button
+                    variant="link"
+                    className="p-0 text-white hover-underline"
+                  >
                     View Profile
                   </Button>
                   <br />
-                  <Button variant="link" className="p-0 text-white hover-underline">
+                  <Button
+                    variant="link"
+                    className="p-0 text-white hover-underline"
+                  >
                     Log Out
                   </Button>
                 </div>
@@ -128,9 +134,17 @@ const LandingScreen = () => {
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan="11" className="text-center">Loading...</td></tr>
+                    <tr>
+                      <td colSpan="11" className="text-center">
+                        Loading...
+                      </td>
+                    </tr>
                   ) : tickets.length === 0 ? (
-                    <tr><td colSpan="11" className="text-center">No work orders available.</td></tr>
+                    <tr>
+                      <td colSpan="11" className="text-center">
+                        No work orders available.
+                      </td>
+                    </tr>
                   ) : (
                     tickets.map((ticket) => (
                       <tr key={ticket._id}>
@@ -140,11 +154,13 @@ const LandingScreen = () => {
                         <td>{ticket.trailerNumber}</td>
                         <td>{ticket.complaint}</td>
                         <td>{ticket.currentLocation}</td>
-                        <td>{"John Doe"}</td> {/* Hard-coded Fleet Rep */}
-                        <td>{"AUTH-1234"}</td> {/* Hard-coded Auth # */}
-                        <td>{new Date(ticket.createdAt).toLocaleDateString()}</td>
-                        <td>{"2 hrs ago"}</td> {/* Hard-coded Time Elapsed */}
-                        <td>{"Pending"}</td> {/* Hard-coded Status */}
+                        <td>{"John Doe"}</td>
+                        <td>{"AUTH-1234"}</td>
+                        <td>
+                          {new Date(ticket.createdAt).toLocaleDateString()}
+                        </td>
+                        <td>{"2 hrs ago"}</td>
+                        <td>{"Pending"}</td>
                       </tr>
                     ))
                   )}
@@ -156,7 +172,8 @@ const LandingScreen = () => {
             <div className="text-center py-5">
               <h4>Please log in to view work orders.</h4>
               <p>
-                Login or register an account to access and manage your work orders.
+                Login or register an account to access and manage your work
+                orders.
               </p>
               <Button variant="dark" className="mt-3">
                 Login / Register

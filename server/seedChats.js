@@ -22,7 +22,8 @@ const seedChats = async () => {
       const chatData = {
         ticket: ticket._id,
         sender: ticket.user, // Use the ticket's user as the sender
-        message: `Initial breakdown report for ticket ${ticket.ticketNumber}.`
+        message: `Initial breakdown report for ticket ${ticket.ticketNumber}.`,
+        company: ticket.company // Associate the chat with the ticket's company
       };
       chatPromises.push(Chat.create(chatData));
     }

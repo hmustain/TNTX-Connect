@@ -17,7 +17,7 @@ const Layout = () => {
             <div className="d-flex align-items-center">
               <img
                 alt="TNTX Logo"
-                src="/images/TNTX-SOLUTIONS-LOGO.png"
+                src="/images/UPDATED-TNTX-SOLUTIONS-LOGO.png"
                 style={{ width: "150px", height: "auto", marginRight: "10px" }}
               />
               <span

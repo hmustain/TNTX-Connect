@@ -62,6 +62,7 @@ const LandingScreen = () => {
               <tr>
                 <th>Ticket #</th>
                 <th>Unit Type</th>
+                <th>Company</th>
                 <th>Tractor #</th>
                 <th>Trailer #</th>
                 <th>Complaint</th>
@@ -97,6 +98,7 @@ const LandingScreen = () => {
                         color="#000"
                       />
                     </td>{" "}
+                    <td>{ticket.company.name}</td>
                     <td>{ticket.truckNumber}</td>
                     <td>{ticket.trailerNumber}</td>
                     <td>{ticket.complaint}</td>

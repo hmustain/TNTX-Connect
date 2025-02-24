@@ -3,6 +3,19 @@ import useTickets from "../hooks/useTickets";
 import useCurrentUser from "../hooks/useCurrentUser";
 import { Container, Row, Col, Button, Table } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
+import { formatDistanceToNow } from "date-fns";
+import { PiTruckTrailerFill } from "react-icons/pi";
+import { FaTrailer } from "react-icons/fa6";
+
+const UnitIcon = ({ unitType, size = 48, color = "#000" }) => {
+  if (unitType === 'tractor') {
+    return <PiTruckTrailerFill size={size} color={color} />;
+  } else if (unitType === 'trailer') {
+    return <FaTrailer size={size} color={color} />;
+  } else {
+    return null;
+  }
+};
 
 const LandingScreen = () => {
   const { user, loading: userLoading } = useCurrentUser();
@@ -38,9 +51,7 @@ const LandingScreen = () => {
               <Button variant="outline-primary" className="me-2">
                 Action Needed Work Orders
               </Button>
-              <Button variant="outline-primary">
-                All Active Work Orders
-              </Button>
+              <Button variant="outline-primary">All Active Work Orders</Button>
             </Col>
             <Col className="text-end">
               <Button variant="outline-secondary">Filter</Button>
@@ -49,13 +60,13 @@ const LandingScreen = () => {
           <Table striped bordered hover responsive>
             <thead>
               <tr>
-                <th>Work Order #</th>
+                <th>Ticket #</th>
                 <th>Unit Type</th>
                 <th>Tractor #</th>
                 <th>Trailer #</th>
-                <th>Complaint Type</th>
+                <th>Complaint</th>
                 <th>Location</th>
-                <th>Fleet Rep</th>
+                <th>Driver Name</th>
                 <th>Auth #</th>
                 <th>Date</th>
                 <th>Time Elapsed</th>
@@ -79,16 +90,24 @@ const LandingScreen = () => {
                 tickets.map((ticket) => (
                   <tr key={ticket._id}>
                     <td>{ticket.ticketNumber}</td>
-                    <td>{ticket.unitAffected}</td>
+                    <td style={{ textAlign: "center" }}>
+                      <UnitIcon
+                        unitType={ticket.unitAffected}
+                        size={48}
+                        color="#000"
+                      />
+                    </td>{" "}
                     <td>{ticket.truckNumber}</td>
                     <td>{ticket.trailerNumber}</td>
                     <td>{ticket.complaint}</td>
                     <td>{ticket.currentLocation}</td>
-                    <td>{"John Doe"}</td>
-                    <td>{"AUTH-1234"}</td>
+                    <td>{ticket.user.name}</td> {/* Hard-coded Fleet Rep */}
+                    <td>{"AUTH-1234"}</td> {/* Hard-coded Auth # */}
                     <td>{new Date(ticket.createdAt).toLocaleDateString()}</td>
-                    <td>{"2 hrs ago"}</td>
-                    <td>{"Pending"}</td>
+                    {formatDistanceToNow(new Date(ticket.createdAt), {
+                      addSuffix: true,
+                    })}
+                    <td>{"Pending"}</td> {/* Hard-coded Status */}
                   </tr>
                 ))
               )}
@@ -101,7 +120,11 @@ const LandingScreen = () => {
           <h4>Welcome to TNTX Connect</h4>
           <p>We handle all of your breakdown solutions.</p>
           <p>Please login or register an account to see tickets.</p>
-          <Button variant="dark" className="mt-3" onClick={() => navigate("/login")}>
+          <Button
+            variant="dark"
+            className="mt-3"
+            onClick={() => navigate("/login")}
+          >
             Login / Register
           </Button>
         </div>

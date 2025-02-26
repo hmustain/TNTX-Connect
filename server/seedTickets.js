@@ -4,7 +4,17 @@ const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const Ticket = require('./models/Ticket');
 const User = require('./models/User');
-const Company = require('./models/Company');
+
+const generateUniqueTicketNumber = (existingNumbers) => {
+  let ticketNumber;
+  do {
+    ticketNumber = Math.floor(Math.random() * 100000)
+      .toString()
+      .padStart(5, '0');
+  } while (existingNumbers.has(ticketNumber));
+  existingNumbers.add(ticketNumber);
+  return ticketNumber;
+};
 
 const seedTickets = async () => {
   try {
@@ -13,37 +23,40 @@ const seedTickets = async () => {
     // Clear the tickets collection first
     await Ticket.deleteMany({});
 
-    // Retrieve all drivers (users with role 'driver') and companies
+    // Retrieve all drivers (users with role 'driver')
     const drivers = await User.find({ role: 'driver' });
-    const companies = await Company.find({});
-
     const ticketPromises = [];
+    const generatedTicketNumbers = new Set();
 
-    // For each driver, create 2 tickets (select a random company for each)
+    // For each driver, create 5 tickets using the driver's company
     for (const driver of drivers) {
-      for (let i = 1; i <= 2; i++) {
-        // Choose a random company from the companies list
-        const company = companies[Math.floor(Math.random() * companies.length)];
-
-        // Generate a random 5-digit ticket number
-        const randomTicketNumber = Math.floor(Math.random() * 100000)
-          .toString()
-          .padStart(5, '0');
+      // Ensure the driver has a company assigned
+      if (!driver.company) {
+        console.warn(`Driver ${driver.name} (${driver._id}) has no company assigned. Skipping ticket creation.`);
+        continue;
+      }
+      for (let i = 1; i <= 5; i++) {
+        const randomTicketNumber = generateUniqueTicketNumber(generatedTicketNumbers);
 
         const ticketData = {
           ticketNumber: randomTicketNumber,
-          user: driver._id, // Associate the ticket with the driver
-          company: company._id,
+          user: driver._id,         // Associate the ticket with the driver
+          company: driver.company,  // Use the driver's company
           truckNumber: `TX${Math.floor(Math.random() * 10000)}`,
-          vinLast8: 'VIN' + Math.floor(Math.random() * 10000000).toString().padStart(8, '0'),
+          vinLast8:
+            'VIN' +
+            Math.floor(Math.random() * 10000000)
+              .toString()
+              .padStart(8, '0'),
           mileage: Math.floor(Math.random() * 200000),
           trailerNumber: `TR${Math.floor(Math.random() * 10000)}`,
           // Alternate loadStatus for variety
           loadStatus: i % 2 === 0 ? 'loaded' : 'empty',
-          loadNumber: i % 2 === 0 ? `LOAD${Math.floor(Math.random() * 10000)}` : undefined,
+          loadNumber:
+            i % 2 === 0 ? `LOAD${Math.floor(Math.random() * 10000)}` : undefined,
           complaint: `Complaint ${i} for ${driver.name}: Engine overheating or brake failure.`,
           currentLocation: 'Test Location',
-          // New fields added:
+          // Additional fields
           unitAffected: Math.random() < 0.5 ? 'tractor' : 'trailer',
           driverPhone: "555-123-4567"
         };

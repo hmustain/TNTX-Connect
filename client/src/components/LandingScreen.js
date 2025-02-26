@@ -3,7 +3,7 @@ import useTickets from "../hooks/useTickets";
 import useCurrentUser from "../hooks/useCurrentUser";
 import { Container, Row, Col, Button, Table } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
-import { formatDistanceToNow } from "date-fns";
+import { differenceInMinutes } from "date-fns";
 import { PiTruckTrailerFill } from "react-icons/pi";
 import { FaTrailer } from "react-icons/fa6";
 
@@ -17,6 +17,19 @@ const UnitIcon = ({ unitType, size = 48, color = "#000" }) => {
   }
 };
 
+const renderElapsedTimeExtended = (createdAt) => {
+  const totalMinutes = differenceInMinutes(new Date(), new Date(createdAt));
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const remainderMinutes = totalMinutes % (60 * 24);
+  const hours = Math.floor(remainderMinutes / 60);
+  const minutes = remainderMinutes % 60;
+
+  if (days > 0) {
+    return `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  }
+  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+};
+
 const LandingScreen = () => {
   const { user, loading: userLoading } = useCurrentUser();
   const isAuthenticated = Boolean(user);
@@ -24,13 +37,13 @@ const LandingScreen = () => {
   const navigate = useNavigate();
 
   return (
-    <Container className="my-4">
+    <Container className="my-4 text-center">
       {userLoading ? (
         <div className="text-center">Loading user data...</div>
       ) : isAuthenticated ? (
         <>
-          {/* Authenticated view with tickets */}
-          <Row className="mb-3">
+          {/* CTA Buttons Row (left-justified) */}
+          <Row className="mb-3 text-start">
             <Col>
               <Button variant="secondary" className="me-2 mb-2">
                 Active Tickets
@@ -47,74 +60,84 @@ const LandingScreen = () => {
             </Col>
           </Row>
           <Row className="align-items-center mb-3">
-            <Col>
+            <Col className="text-start">
               <Button variant="outline-primary" className="me-2">
                 Action Needed Work Orders
               </Button>
-              <Button variant="outline-primary">All Active Work Orders</Button>
+              <Button variant="outline-primary">
+                All Active Work Orders
+              </Button>
             </Col>
             <Col className="text-end">
               <Button variant="outline-secondary">Filter</Button>
             </Col>
           </Row>
-          <Table striped bordered hover responsive>
-            <thead>
-              <tr>
-                <th>Ticket #</th>
-                <th>Unit Type</th>
-                <th>Company</th>
-                <th>Tractor #</th>
-                <th>Trailer #</th>
-                <th>Complaint</th>
-                <th>Location</th>
-                <th>Driver Name</th>
-                <th>Auth #</th>
-                <th>Date</th>
-                <th>Time Elapsed</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {ticketsLoading ? (
-                <tr>
-                  <td colSpan="11" className="text-center">
-                    Loading...
-                  </td>
+          {/* Centered Table Container */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: '400px'
+            }}
+          >
+            <Table striped bordered hover responsive className="text-center">
+              <thead className="table-dark">
+                <tr style={{ verticalAlign: 'middle' }}>
+                  <th>Ticket #</th>
+                  <th>Unit Type</th>
+                  <th>Company</th>
+                  <th>Tractor #</th>
+                  <th>Trailer #</th>
+                  <th>Complaint</th>
+                  <th>Location</th>
+                  <th>Driver Name</th>
+                  <th>Auth #</th>
+                  <th>Date</th>
+                  <th>Time Elapsed</th>
+                  <th>Status</th>
                 </tr>
-              ) : tickets.length === 0 ? (
-                <tr>
-                  <td colSpan="11" className="text-center">
-                    No work orders available.
-                  </td>
-                </tr>
-              ) : (
-                tickets.map((ticket) => (
-                  <tr key={ticket._id}>
-                    <td>{ticket.ticketNumber}</td>
-                    <td style={{ textAlign: "center" }}>
-                      <UnitIcon
-                        unitType={ticket.unitAffected}
-                        size={48}
-                        color="#000"
-                      />
-                    </td>{" "}
-                    <td>{ticket.company.name}</td>
-                    <td>{ticket.truckNumber}</td>
-                    <td>{ticket.trailerNumber}</td>
-                    <td>{ticket.complaint}</td>
-                    <td>{ticket.currentLocation}</td>
-                    <td>{ticket.user.name}</td> {/* Hard-coded Fleet Rep */}
-                    <td>{"AUTH-1234"}</td> {/* Hard-coded Auth # */}
-                    <td>{new Date(ticket.createdAt).toLocaleDateString()}</td>
-                    {formatDistanceToNow(new Date(ticket.createdAt), {
-                      addSuffix: true,
-                    })}
-                    <td>{"Pending"}</td> {/* Hard-coded Status */}
+              </thead>
+              <tbody>
+                {ticketsLoading ? (
+                  <tr style={{ verticalAlign: 'middle' }}>
+                    <td colSpan="12" className="text-center">
+                      Loading...
+                    </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </Table>
+                ) : tickets.length === 0 ? (
+                  <tr style={{ verticalAlign: 'middle' }}>
+                    <td colSpan="12" className="text-center">
+                      No work orders available.
+                    </td>
+                  </tr>
+                ) : (
+                  tickets.map((ticket) => (
+                    <tr key={ticket._id} style={{ verticalAlign: 'middle' }}>
+                      <td>{ticket.ticketNumber}</td>
+                      <td>
+                        <UnitIcon
+                          unitType={ticket.unitAffected}
+                          size={48}
+                          color="#000"
+                        />
+                      </td>
+                      <td>{ticket.company && ticket.company.name ? ticket.company.name : 'None'}</td>
+                      <td>{ticket.truckNumber}</td>
+                      <td>{ticket.trailerNumber}</td>
+                      <td>{ticket.complaint}</td>
+                      <td>{ticket.currentLocation}</td>
+                      <td>{ticket.user && ticket.user.name}</td>
+                      <td>{"AUTH-1234"}</td>
+                      <td>{new Date(ticket.createdAt).toLocaleDateString()}</td>
+                      <td>{renderElapsedTimeExtended(ticket.createdAt)}</td>
+                      <td>{"Pending"}</td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </Table>
+          </div>
         </>
       ) : (
         // Minimal logged-out view with welcome message and CTA
@@ -122,11 +145,7 @@ const LandingScreen = () => {
           <h4>Welcome to TNTX Connect</h4>
           <p>We handle all of your breakdown solutions.</p>
           <p>Please login or register an account to see tickets.</p>
-          <Button
-            variant="dark"
-            className="mt-3"
-            onClick={() => navigate("/login")}
-          >
+          <Button variant="dark" className="mt-3" onClick={() => navigate("/login")}>
             Login / Register
           </Button>
         </div>

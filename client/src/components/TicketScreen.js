@@ -1,3 +1,4 @@
+// src/components/TicketScreen.js
 import React, { useState, useEffect } from "react";
 import { Container, Card, Row, Col, Button, Form } from "react-bootstrap";
 import { useParams } from "react-router-dom";
@@ -10,11 +11,20 @@ const TicketScreen = () => {
   const [chatMessage, setChatMessage] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
 
+  // Get token from localStorage (or use AuthContext if you prefer)
+  const token = localStorage.getItem("authToken");
+
   // Fetch ticket details
   useEffect(() => {
     const fetchTicket = async () => {
       try {
-        const res = await fetch(`/api/tickets/${id}`);
+        const res = await fetch(`/api/tickets/${id}`, {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error("Unauthorized or Ticket not found");
         const data = await res.json();
         if (data.success) {
           setTicket(data.data);
@@ -26,14 +36,20 @@ const TicketScreen = () => {
       }
     };
     fetchTicket();
-  }, [id]);
+  }, [id, token]);
 
   // Fetch chat messages for the ticket
   useEffect(() => {
     const fetchChats = async () => {
       try {
         setChatLoading(true);
-        const res = await fetch(`/api/chats?ticketId=${id}`);
+        const res = await fetch(`/api/chats?ticketId=${id}`, {
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+        });
+        if (!res.ok) throw new Error("Unauthorized or Chat not found");
         const data = await res.json();
         if (data.success) {
           setChats(data.data);
@@ -44,21 +60,23 @@ const TicketScreen = () => {
         setChatLoading(false);
       }
     };
-
     fetchChats();
-  }, [id]);
+  }, [id, token]);
 
   // Post a new chat message
   const handleSendChat = async (e) => {
     e.preventDefault();
     if (!chatMessage.trim()) return;
-
     try {
       const res = await fetch("/api/chats", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
         body: JSON.stringify({ ticket: id, message: chatMessage }),
       });
+      if (!res.ok) throw new Error("Error sending message");
       const data = await res.json();
       if (data.success) {
         setChats((prevChats) => [...prevChats, data.data]);
@@ -135,7 +153,6 @@ const TicketScreen = () => {
               )}
             </div>
           )}
-
           <Form onSubmit={handleSendChat}>
             <Form.Group controlId="chatMessage">
               <Form.Control

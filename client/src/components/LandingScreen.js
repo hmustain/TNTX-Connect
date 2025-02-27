@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { differenceInMinutes } from "date-fns";
 import { PiTruckTrailerFill } from "react-icons/pi";
 import { FaTrailer } from "react-icons/fa6";
-import FilterModal from "./FilterModal"; // Import your modal component here
+import FilterModal from "./FilterModal";
 
 const UnitIcon = ({ unitType, size = 48, color = "#000" }) => {
   if (unitType === "tractor") {
@@ -41,25 +41,18 @@ const LandingScreen = () => {
   const { tickets, loading: ticketsLoading } = useTickets(user);
   const navigate = useNavigate();
 
-  // State for the filter and modal
+  // Filter state & modal visibility
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filter, setFilter] = useState({
     status: "",
     unitType: "",
-    // Add more fields as needed, e.g., complaintType, paymentType, date range, etc.
+    // Add more fields as needed
   });
 
-  // Filter the tickets based on the selected criteria
+  // Filter tickets based on selected criteria
   const filteredTickets = tickets.filter((ticket) => {
-    // Example: filter by status
-    if (filter.status && ticket.status !== filter.status) {
-      return false;
-    }
-    // Example: filter by unit type
-    if (filter.unitType && ticket.unitAffected !== filter.unitType) {
-      return false;
-    }
-    // Add more conditions if you have more filter fields
+    if (filter.status && ticket.status !== filter.status) return false;
+    if (filter.unitType && ticket.unitAffected !== filter.unitType) return false;
     return true;
   });
 
@@ -86,13 +79,14 @@ const LandingScreen = () => {
               </Button>
             </Col>
           </Row>
-
           <Row className="align-items-center mb-3">
             <Col className="text-start">
               <Button variant="outline-primary" className="me-2">
                 Action Needed Work Orders
               </Button>
-              <Button variant="outline-primary">All Active Work Orders</Button>
+              <Button variant="outline-primary">
+                All Active Work Orders
+              </Button>
             </Col>
             <Col className="text-end">
               <Button variant="outline-secondary" onClick={() => setShowFilterModal(true)}>
@@ -101,7 +95,7 @@ const LandingScreen = () => {
             </Col>
           </Row>
 
-          {/* The Filter Modal */}
+          {/* Filter Modal */}
           <FilterModal
             show={showFilterModal}
             onClose={() => setShowFilterModal(false)}
@@ -150,15 +144,17 @@ const LandingScreen = () => {
                   </tr>
                 ) : (
                   filteredTickets.map((ticket) => (
-                    <tr key={ticket._id} style={{ verticalAlign: "middle" }}>
+                    <tr
+                      key={ticket._id}
+                      style={{ verticalAlign: "middle", cursor: "pointer" }}
+                      onClick={() => navigate(`/ticket/${ticket._id}`)}
+                    >
                       <td>{ticket.ticketNumber}</td>
                       <td>
                         <UnitIcon unitType={ticket.unitAffected} size={48} color="#000" />
                       </td>
                       <td>
-                        {ticket.company && ticket.company.name
-                          ? ticket.company.name
-                          : "None"}
+                        {ticket.company && ticket.company.name ? ticket.company.name : "None"}
                       </td>
                       <td>{ticket.truckNumber}</td>
                       <td>{ticket.trailerNumber}</td>
@@ -177,7 +173,6 @@ const LandingScreen = () => {
           </div>
         </>
       ) : (
-        // Minimal logged-out view with welcome message and CTA
         <div className="text-center py-5">
           <h4>Welcome to TNTX Connect</h4>
           <p>We handle all of your breakdown solutions.</p>

@@ -1,17 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Modal, Button, Form, Row, Col } from 'react-bootstrap';
 
 const FilterModal = ({ show, onClose, filter, setFilter }) => {
-  // Create a local copy of the filter so the user can cancel or apply
-  const [localFilter, setLocalFilter] = useState({
-    status: filter.status || '',
-    unitType: filter.unitType || '',
-    complaintType: filter.complaintType || '',
-    companyName: filter.companyName || '',
-    location: filter.location || '',
-    dateFrom: filter.dateFrom || '',
-    dateTo: filter.dateTo || '',
-  });
+  // Set initial local state based on the parent's filter
+  const initialState = {
+    status: "",
+    unitType: "",
+    complaintType: "",
+    companyName: "",
+    location: "",
+    dateFrom: "",
+    dateTo: "",
+  };
+
+  const [localFilter, setLocalFilter] = useState(filter || initialState);
+
+  // When the parent's filter changes, update the local state (optional)
+  useEffect(() => {
+    setLocalFilter(filter || initialState);
+  }, [filter]);
 
   const handleChange = (e) => {
     setLocalFilter({
@@ -21,10 +28,15 @@ const FilterModal = ({ show, onClose, filter, setFilter }) => {
   };
 
   const handleApply = () => {
-    // Update the parent filter
+    // Update parent filter and close modal
     setFilter(localFilter);
-    // Close modal
     onClose();
+  };
+
+  const handleClear = () => {
+    // Reset local filter to initial state and update parent filter
+    setLocalFilter(initialState);
+    setFilter(initialState);
   };
 
   return (
@@ -135,6 +147,9 @@ const FilterModal = ({ show, onClose, filter, setFilter }) => {
         </Form>
       </Modal.Body>
       <Modal.Footer>
+        <Button variant="dark" onClick={handleClear}>
+          Clear
+        </Button>
         <Button variant="dark" onClick={onClose}>
           Cancel
         </Button>

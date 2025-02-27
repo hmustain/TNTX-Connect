@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import useTickets from "../hooks/useTickets";
 import useCurrentUser from "../hooks/useCurrentUser";
 import { Container, Row, Col, Button, Table } from "react-bootstrap";
@@ -6,11 +6,12 @@ import { useNavigate } from "react-router-dom";
 import { differenceInMinutes } from "date-fns";
 import { PiTruckTrailerFill } from "react-icons/pi";
 import { FaTrailer } from "react-icons/fa6";
+import FilterModal from "./FilterModal"; // Import your modal component here
 
 const UnitIcon = ({ unitType, size = 48, color = "#000" }) => {
-  if (unitType === 'tractor') {
+  if (unitType === "tractor") {
     return <PiTruckTrailerFill size={size} color={color} />;
-  } else if (unitType === 'trailer') {
+  } else if (unitType === "trailer") {
     return <FaTrailer size={size} color={color} />;
   } else {
     return null;
@@ -25,9 +26,13 @@ const renderElapsedTimeExtended = (createdAt) => {
   const minutes = remainderMinutes % 60;
 
   if (days > 0) {
-    return `${days.toString().padStart(2, '0')}:${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    return `${days.toString().padStart(2, "0")}:${hours
+      .toString()
+      .padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
   }
-  return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+  return `${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}`;
 };
 
 const LandingScreen = () => {
@@ -35,6 +40,28 @@ const LandingScreen = () => {
   const isAuthenticated = Boolean(user);
   const { tickets, loading: ticketsLoading } = useTickets(user);
   const navigate = useNavigate();
+
+  // State for the filter and modal
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [filter, setFilter] = useState({
+    status: "",
+    unitType: "",
+    // Add more fields as needed, e.g., complaintType, paymentType, date range, etc.
+  });
+
+  // Filter the tickets based on the selected criteria
+  const filteredTickets = tickets.filter((ticket) => {
+    // Example: filter by status
+    if (filter.status && ticket.status !== filter.status) {
+      return false;
+    }
+    // Example: filter by unit type
+    if (filter.unitType && ticket.unitAffected !== filter.unitType) {
+      return false;
+    }
+    // Add more conditions if you have more filter fields
+    return true;
+  });
 
   return (
     <Container className="my-4 text-center">
@@ -59,31 +86,41 @@ const LandingScreen = () => {
               </Button>
             </Col>
           </Row>
+
           <Row className="align-items-center mb-3">
             <Col className="text-start">
               <Button variant="outline-primary" className="me-2">
                 Action Needed Work Orders
               </Button>
-              <Button variant="outline-primary">
-                All Active Work Orders
-              </Button>
+              <Button variant="outline-primary">All Active Work Orders</Button>
             </Col>
             <Col className="text-end">
-              <Button variant="outline-secondary">Filter</Button>
+              <Button variant="outline-secondary" onClick={() => setShowFilterModal(true)}>
+                Filter
+              </Button>
             </Col>
           </Row>
+
+          {/* The Filter Modal */}
+          <FilterModal
+            show={showFilterModal}
+            onClose={() => setShowFilterModal(false)}
+            filter={filter}
+            setFilter={setFilter}
+          />
+
           {/* Centered Table Container */}
           <div
             style={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              minHeight: '400px'
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: "400px",
             }}
           >
             <Table striped bordered hover responsive className="text-center">
               <thead className="table-dark">
-                <tr style={{ verticalAlign: 'middle' }}>
+                <tr style={{ verticalAlign: "middle" }}>
                   <th>Ticket #</th>
                   <th>Unit Type</th>
                   <th>Company</th>
@@ -100,29 +137,29 @@ const LandingScreen = () => {
               </thead>
               <tbody>
                 {ticketsLoading ? (
-                  <tr style={{ verticalAlign: 'middle' }}>
+                  <tr style={{ verticalAlign: "middle" }}>
                     <td colSpan="12" className="text-center">
                       Loading...
                     </td>
                   </tr>
-                ) : tickets.length === 0 ? (
-                  <tr style={{ verticalAlign: 'middle' }}>
+                ) : filteredTickets.length === 0 ? (
+                  <tr style={{ verticalAlign: "middle" }}>
                     <td colSpan="12" className="text-center">
                       No work orders available.
                     </td>
                   </tr>
                 ) : (
-                  tickets.map((ticket) => (
-                    <tr key={ticket._id} style={{ verticalAlign: 'middle' }}>
+                  filteredTickets.map((ticket) => (
+                    <tr key={ticket._id} style={{ verticalAlign: "middle" }}>
                       <td>{ticket.ticketNumber}</td>
                       <td>
-                        <UnitIcon
-                          unitType={ticket.unitAffected}
-                          size={48}
-                          color="#000"
-                        />
+                        <UnitIcon unitType={ticket.unitAffected} size={48} color="#000" />
                       </td>
-                      <td>{ticket.company && ticket.company.name ? ticket.company.name : 'None'}</td>
+                      <td>
+                        {ticket.company && ticket.company.name
+                          ? ticket.company.name
+                          : "None"}
+                      </td>
                       <td>{ticket.truckNumber}</td>
                       <td>{ticket.trailerNumber}</td>
                       <td>{ticket.complaint}</td>
@@ -131,7 +168,7 @@ const LandingScreen = () => {
                       <td>{"AUTH-1234"}</td>
                       <td>{new Date(ticket.createdAt).toLocaleDateString()}</td>
                       <td>{renderElapsedTimeExtended(ticket.createdAt)}</td>
-                      <td>{"Pending"}</td>
+                      <td>{ticket.status || "Pending"}</td>
                     </tr>
                   ))
                 )}

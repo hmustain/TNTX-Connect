@@ -16,6 +16,17 @@ const generateUniqueTicketNumber = (existingNumbers) => {
   return ticketNumber;
 };
 
+// Array of simpler complaint types
+const complaintOptions = [
+  "Mechanical",
+  "Tires",
+  "Brakes",
+  "Jumpstart",
+  "Lockout",
+  "DOT",
+  "PM Service"
+];
+
 const seedTickets = async () => {
   try {
     await connectDB();
@@ -35,30 +46,36 @@ const seedTickets = async () => {
         console.warn(`Driver ${driver.name} (${driver._id}) has no company assigned. Skipping ticket creation.`);
         continue;
       }
+
       for (let i = 1; i <= 5; i++) {
+        // Generate a unique 5-digit ticket number
         const randomTicketNumber = generateUniqueTicketNumber(generatedTicketNumbers);
+
+        // Pick a random complaint from the array
+        const randomComplaint = complaintOptions[Math.floor(Math.random() * complaintOptions.length)];
+
+        // Randomly assign status (20% closed, 80% open) - tweak as desired
+        const randomStatus = Math.random() < 0.2 ? "closed" : "open";
 
         const ticketData = {
           ticketNumber: randomTicketNumber,
           user: driver._id,         // Associate the ticket with the driver
           company: driver.company,  // Use the driver's company
           truckNumber: `TX${Math.floor(Math.random() * 10000)}`,
-          vinLast8:
-            'VIN' +
-            Math.floor(Math.random() * 10000000)
-              .toString()
-              .padStart(8, '0'),
+          vinLast8: 'VIN' + Math.floor(Math.random() * 10000000).toString().padStart(8, '0'),
           mileage: Math.floor(Math.random() * 200000),
           trailerNumber: `TR${Math.floor(Math.random() * 10000)}`,
           // Alternate loadStatus for variety
           loadStatus: i % 2 === 0 ? 'loaded' : 'empty',
-          loadNumber:
-            i % 2 === 0 ? `LOAD${Math.floor(Math.random() * 10000)}` : undefined,
-          complaint: `Complaint ${i} for ${driver.name}: Engine overheating or brake failure.`,
+          loadNumber: i % 2 === 0 ? `LOAD${Math.floor(Math.random() * 10000)}` : undefined,
+          // Use simpler complaint
+          complaint: randomComplaint,
           currentLocation: 'Test Location',
           // Additional fields
           unitAffected: Math.random() < 0.5 ? 'tractor' : 'trailer',
-          driverPhone: "555-123-4567"
+          driverPhone: "555-123-4567",
+          // Newly added status
+          status: randomStatus
         };
 
         ticketPromises.push(Ticket.create(ticketData));
@@ -68,8 +85,9 @@ const seedTickets = async () => {
     const tickets = await Promise.all(ticketPromises);
     console.log(`Created ${tickets.length} tickets.`);
     tickets.forEach(ticket => {
-      console.log(`Ticket ${ticket.ticketNumber} for driver ${ticket.user} - ${ticket._id}`);
+      console.log(`Ticket ${ticket.ticketNumber} for driver ${ticket.user} - ${ticket._id} - Status: ${ticket.status}`);
     });
+
     process.exit(0);
   } catch (error) {
     console.error("Error seeding tickets:", error);

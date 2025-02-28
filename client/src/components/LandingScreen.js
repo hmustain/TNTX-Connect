@@ -71,9 +71,10 @@ const LandingScreen = () => {
               <Button variant="secondary" className="me-2 mb-2">
                 Historical Tickets
               </Button>
-              <Button variant="secondary" className="me-2 mb-2">
+              {/* Hiding Chat with an Agent for now -- could be a future feature */}
+              {/* <Button variant="secondary" className="me-2 mb-2">
                 Chat with an Agent
-              </Button>
+              </Button> */}
               <Button variant="secondary" className="me-2 mb-2">
                 Submit a Breakdown Ticket
               </Button>

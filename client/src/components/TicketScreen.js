@@ -1,27 +1,42 @@
-// src/components/TicketScreen.js
 import React, { useState, useEffect } from "react";
-import { Container, Card, Row, Col, Button, Form } from "react-bootstrap";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Button,
+  Form
+} from "react-bootstrap";
+
+/*Container Layout
+  1) Top-left: Ticket Info
+  2) Bottom-left: Chat
+  3) Top-right: Unit Details
+  4) Bottom-right: Driver Info
+*/
 
 const TicketScreen = () => {
   const { id } = useParams();
-  const [ticket, setTicket] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [chats, setChats] = useState([]);
-  const [chatMessage, setChatMessage] = useState("");
-  const [chatLoading, setChatLoading] = useState(false);
+  const navigate = useNavigate();
 
-  // Get token from localStorage (or use AuthContext if you prefer)
+  // Example state for ticket and chat
+  const [ticket, setTicket] = useState(null);
+  const [chats, setChats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatMessage, setChatMessage] = useState("");
+
+  // For demonstration, we’ll do minimal fetch logic here:
   const token = localStorage.getItem("authToken");
 
-  // Fetch ticket details
   useEffect(() => {
     const fetchTicket = async () => {
       try {
         const res = await fetch(`/api/tickets/${id}`, {
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
         if (!res.ok) throw new Error("Unauthorized or Ticket not found");
@@ -38,7 +53,6 @@ const TicketScreen = () => {
     fetchTicket();
   }, [id, token]);
 
-  // Fetch chat messages for the ticket
   useEffect(() => {
     const fetchChats = async () => {
       try {
@@ -46,7 +60,7 @@ const TicketScreen = () => {
         const res = await fetch(`/api/chats?ticketId=${id}`, {
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         });
         if (!res.ok) throw new Error("Unauthorized or Chat not found");
@@ -63,23 +77,23 @@ const TicketScreen = () => {
     fetchChats();
   }, [id, token]);
 
-  // Post a new chat message
   const handleSendChat = async (e) => {
     e.preventDefault();
     if (!chatMessage.trim()) return;
+
     try {
       const res = await fetch("/api/chats", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ ticket: id, message: chatMessage }),
       });
       if (!res.ok) throw new Error("Error sending message");
       const data = await res.json();
       if (data.success) {
-        setChats((prevChats) => [...prevChats, data.data]);
+        setChats((prev) => [...prev, data.data]);
         setChatMessage("");
       }
     } catch (err) {
@@ -103,71 +117,150 @@ const TicketScreen = () => {
     );
   }
 
+  // Destructure fields for easier usage:
+  const {
+    ticketNumber,
+    status,
+    complaint,
+    currentLocation,
+    createdAt,
+    company,
+    user,
+    unitAffected,
+    truckNumber,
+    trailerNumber,
+    vinLast8,
+    mileage,
+    loadStatus,
+    // You might have other fields...
+  } = ticket;
+
   return (
     <Container className="my-4">
-      {/* Ticket Details */}
-      <Card className="mb-4">
-        <Card.Header as="h5">Ticket Details</Card.Header>
-        <Card.Body>
-          <Row>
-            <Col md={6}>
-              <p><strong>Ticket #:</strong> {ticket.ticketNumber}</p>
-              <p><strong>Unit Type:</strong> {ticket.unitAffected}</p>
-              <p>
-                <strong>Company:</strong>{" "}
-                {ticket.company && ticket.company.name ? ticket.company.name : "None"}
-              </p>
-              <p><strong>Tractor #:</strong> {ticket.truckNumber}</p>
-              <p><strong>Trailer #:</strong> {ticket.trailerNumber}</p>
-            </Col>
-            <Col md={6}>
-              <p><strong>Complaint:</strong> {ticket.complaint}</p>
-              <p><strong>Location:</strong> {ticket.currentLocation}</p>
-              <p><strong>Driver Name:</strong> {ticket.user && ticket.user.name}</p>
-              <p><strong>Date:</strong> {new Date(ticket.createdAt).toLocaleDateString()}</p>
-              <p><strong>Status:</strong> {ticket.status || "Pending"}</p>
-            </Col>
-          </Row>
-        </Card.Body>
-      </Card>
+      {/* Top Navigation / CTA */}
+      <div className="d-flex justify-content-between mb-3">
+        <Button variant="secondary" onClick={() => navigate("/")}>
+          Back to Tickets
+        </Button>
+        {/* Optionally replicate some CTA buttons here, or "Print Ticket", etc. */}
+      </div>
 
-      {/* Chat Section */}
-      <Card>
-        <Card.Header as="h5">Chat</Card.Header>
-        <Card.Body>
-          {chatLoading ? (
-            <p>Loading chats...</p>
-          ) : (
-            <div style={{ maxHeight: "300px", overflowY: "auto", marginBottom: "1rem" }}>
-              {chats.length === 0 ? (
-                <p>No chat messages yet.</p>
+      {/* 2 Rows, each with 2 Cols. Left Col ~ 75%, Right Col ~ 25% */}
+      <Row>
+        {/* Top-Left (Ticket Info) */}
+        <Col md={9}>
+          <Card className="mb-3">
+            <Card.Header as="h5">Ticket Info</Card.Header>
+            <Card.Body>
+              <Row>
+                <Col md={6}>
+                  <p><strong>Ticket #:</strong> {ticketNumber}</p>
+                  <p><strong>Status:</strong> {status || "Pending"}</p>
+                  <p><strong>Complaint:</strong> {complaint}</p>
+                  <p><strong>Location:</strong> {currentLocation}</p>
+                  <p><strong>Date Created:</strong> {new Date(createdAt).toLocaleDateString()}</p>
+                </Col>
+                <Col md={6}>
+                  <p><strong>Company:</strong> {company?.name || "N/A"}</p>
+                  <p><strong>Driver Name:</strong> {user?.name || "N/A"}</p>
+                  {/* Add any additional ticket fields you like */}
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        {/* Top-Right (Unit Details) */}
+        <Col md={3}>
+          <Card className="mb-3">
+            <Card.Header as="h5">Unit Details</Card.Header>
+            <Card.Body>
+              <p><strong>Unit Type:</strong> {unitAffected}</p>
+              <p><strong>Make/Model:</strong> {/* If you have them, otherwise remove */}</p>
+              <p><strong>Tractor #:</strong> {truckNumber}</p>
+              <p><strong>Trailer #:</strong> {trailerNumber}</p>
+              <p><strong>VIN Last 8:</strong> {vinLast8}</p>
+              <p><strong>Mileage:</strong> {mileage}</p>
+              <p><strong>Load Status:</strong> {loadStatus}</p>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
+      <Row>
+        {/* Bottom-Left (Chat) */}
+        <Col md={9}>
+          <Card className="mb-3">
+            <Card.Header as="h5">Chat</Card.Header>
+            <Card.Body>
+              {chatLoading ? (
+                <p>Loading chats...</p>
               ) : (
-                chats.map((chat) => (
-                  <div key={chat._id} style={{ marginBottom: "0.5rem", borderBottom: "1px solid #ccc", paddingBottom: "0.5rem" }}>
-                    <p style={{ margin: 0 }}>
-                      <strong>{chat.sender && chat.sender.name}</strong>: {chat.message}
-                    </p>
-                    <small>{new Date(chat.createdAt).toLocaleString()}</small>
-                  </div>
-                ))
+                <div
+                  style={{
+                    maxHeight: "300px",
+                    overflowY: "auto",
+                    marginBottom: "1rem",
+                    border: "1px solid #ddd",
+                    padding: "0.5rem",
+                    borderRadius: "4px",
+                  }}
+                >
+                  {chats.length === 0 ? (
+                    <p>No chat messages yet.</p>
+                  ) : (
+                    chats.map((chat) => (
+                      <div
+                        key={chat._id}
+                        style={{
+                          marginBottom: "0.5rem",
+                          borderBottom: "1px solid #ccc",
+                          paddingBottom: "0.5rem",
+                        }}
+                      >
+                        <p style={{ margin: 0 }}>
+                          <strong>{chat.sender?.name || "System"}</strong>:{" "}
+                          {chat.message}
+                        </p>
+                        <small>
+                          {new Date(chat.createdAt).toLocaleString()}
+                        </small>
+                      </div>
+                    ))
+                  )}
+                </div>
               )}
-            </div>
-          )}
-          <Form onSubmit={handleSendChat}>
-            <Form.Group controlId="chatMessage">
-              <Form.Control
-                type="text"
-                placeholder="Type your message..."
-                value={chatMessage}
-                onChange={(e) => setChatMessage(e.target.value)}
-              />
-            </Form.Group>
-            <Button variant="primary" type="submit" className="mt-2">
-              Send
-            </Button>
-          </Form>
-        </Card.Body>
-      </Card>
+
+              <Form onSubmit={handleSendChat}>
+                <Form.Group controlId="chatMessage">
+                  <Form.Control
+                    type="text"
+                    placeholder="Type your message..."
+                    value={chatMessage}
+                    onChange={(e) => setChatMessage(e.target.value)}
+                  />
+                </Form.Group>
+                <Button variant="primary" type="submit" className="mt-2">
+                  Send
+                </Button>
+              </Form>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        {/* Bottom-Right (Driver Info) */}
+        <Col md={3}>
+          <Card>
+            <Card.Header as="h5">Driver Info</Card.Header>
+            <Card.Body>
+              <p><strong>Name:</strong> {user?.name || "N/A"}</p>
+              <p><strong>Phone:</strong> {user?.phone || "N/A"}</p>
+              <p><strong>Email:</strong> {user?.email || "N/A"}</p>
+              <p><strong>Company:</strong> {company?.name || "N/A"}</p>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
     </Container>
   );
 };

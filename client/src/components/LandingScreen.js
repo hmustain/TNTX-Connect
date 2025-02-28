@@ -24,15 +24,12 @@ const renderElapsedTimeExtended = (createdAt) => {
   const remainderMinutes = totalMinutes % (60 * 24);
   const hours = Math.floor(remainderMinutes / 60);
   const minutes = remainderMinutes % 60;
-
   if (days > 0) {
     return `${days.toString().padStart(2, "0")}:${hours
       .toString()
       .padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
   }
-  return `${hours.toString().padStart(2, "0")}:${minutes
-    .toString()
-    .padStart(2, "0")}`;
+  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
 };
 
 const LandingScreen = () => {
@@ -41,19 +38,32 @@ const LandingScreen = () => {
   const { tickets, loading: ticketsLoading } = useTickets(user);
   const navigate = useNavigate();
 
-  // Filter state & modal visibility
+  // State to toggle between active and historical views
+  const [ticketView, setTicketView] = useState("active"); // "active" or "historical"
+
+  // State for additional filter criteria & modal visibility
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filter, setFilter] = useState({
     status: "",
     unitType: "",
-    // Add more fields as needed
+    // You can add more fields if needed
   });
 
-  // Filter tickets based on selected criteria
-  const filteredTickets = tickets.filter((ticket) => {
+  // First apply additional filters from FilterModal (if any)
+  const filteredByModal = tickets.filter((ticket) => {
     if (filter.status && ticket.status !== filter.status) return false;
     if (filter.unitType && ticket.unitAffected !== filter.unitType) return false;
     return true;
+  });
+
+  // Then filter based on ticketView: active tickets are those that are not "closed"
+  // and historical tickets are those that are "closed"
+  const displayedTickets = filteredByModal.filter((ticket) => {
+    if (ticketView === "active") {
+      return ticket.status !== "Closed";
+    } else {
+      return ticket.status === "Closed";
+    }
   });
 
   return (
@@ -65,14 +75,19 @@ const LandingScreen = () => {
           {/* CTA Buttons Row (left-justified) */}
           <Row className="mb-3 text-start">
             <Col>
-              <Button variant="secondary" className="me-2 mb-2">
+              <Button
+                variant="secondary"
+                className="me-2 mb-2"
+                onClick={() => setTicketView("active")}
+              >
                 Active Tickets
               </Button>
-              <Button variant="secondary" className="me-2 mb-2">
+              <Button
+                variant="secondary"
+                className="me-2 mb-2"
+                onClick={() => setTicketView("historical")}
+              >
                 Historical Tickets
-              </Button>
-              <Button variant="secondary" className="me-2 mb-2">
-                Chat with an Agent
               </Button>
               <Button variant="secondary" className="me-2 mb-2">
                 Submit a Breakdown Ticket
@@ -84,12 +99,13 @@ const LandingScreen = () => {
               <Button variant="outline-primary" className="me-2">
                 Action Needed Work Orders
               </Button>
-              <Button variant="outline-primary">
-                All Active Work Orders
-              </Button>
+              <Button variant="outline-primary">All Active Work Orders</Button>
             </Col>
             <Col className="text-end">
-              <Button variant="outline-secondary" onClick={() => setShowFilterModal(true)}>
+              <Button
+                variant="outline-secondary"
+                onClick={() => setShowFilterModal(true)}
+              >
                 Filter
               </Button>
             </Col>
@@ -136,14 +152,14 @@ const LandingScreen = () => {
                       Loading...
                     </td>
                   </tr>
-                ) : filteredTickets.length === 0 ? (
+                ) : displayedTickets.length === 0 ? (
                   <tr style={{ verticalAlign: "middle" }}>
                     <td colSpan="12" className="text-center">
-                      No work orders available.
+                      No {ticketView} tickets available.
                     </td>
                   </tr>
                 ) : (
-                  filteredTickets.map((ticket) => (
+                  displayedTickets.map((ticket) => (
                     <tr
                       key={ticket._id}
                       style={{ verticalAlign: "middle", cursor: "pointer" }}
@@ -151,10 +167,16 @@ const LandingScreen = () => {
                     >
                       <td>{ticket.ticketNumber}</td>
                       <td>
-                        <UnitIcon unitType={ticket.unitAffected} size={48} color="#000" />
+                        <UnitIcon
+                          unitType={ticket.unitAffected}
+                          size={48}
+                          color="#000"
+                        />
                       </td>
                       <td>
-                        {ticket.company && ticket.company.name ? ticket.company.name : "None"}
+                        {ticket.company && ticket.company.name
+                          ? ticket.company.name
+                          : "None"}
                       </td>
                       <td>{ticket.truckNumber}</td>
                       <td>{ticket.trailerNumber}</td>
@@ -164,7 +186,7 @@ const LandingScreen = () => {
                       <td>{"AUTH-1234"}</td>
                       <td>{new Date(ticket.createdAt).toLocaleDateString()}</td>
                       <td>{renderElapsedTimeExtended(ticket.createdAt)}</td>
-                      <td>{ticket.status || "Pending"}</td>
+                      <td>{ticket.status || "open"}</td>
                     </tr>
                   ))
                 )}
@@ -173,11 +195,16 @@ const LandingScreen = () => {
           </div>
         </>
       ) : (
+        // Minimal logged-out view with welcome message and CTA
         <div className="text-center py-5">
           <h4>Welcome to TNTX Connect</h4>
           <p>We handle all of your breakdown solutions.</p>
           <p>Please login or register an account to see tickets.</p>
-          <Button variant="dark" className="mt-3" onClick={() => navigate("/login")}>
+          <Button
+            variant="dark"
+            className="mt-3"
+            onClick={() => navigate("/login")}
+          >
             Login / Register
           </Button>
         </div>

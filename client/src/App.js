@@ -4,6 +4,7 @@ import { AuthProvider } from './context/AuthContext';
 import Layout from './components/Layout';
 import LandingScreen from './components/LandingScreen';
 import LoginScreen from './components/LoginScreen';
+import TicketScreen from './components/TicketScreen';
 
 function App() {
   return (
@@ -13,6 +14,7 @@ function App() {
           <Route element={<Layout />}>
             <Route path="/" element={<LandingScreen />} />
             <Route path="/login" element={<LoginScreen />} />
+            <Route path="/ticket/:id" element={<TicketScreen />} />
             {/* You can add other routes like /profile etc. */}
           </Route>
         </Routes>

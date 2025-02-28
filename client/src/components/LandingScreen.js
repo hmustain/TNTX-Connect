@@ -60,9 +60,9 @@ const LandingScreen = () => {
   // and historical tickets are those that are "closed"
   const displayedTickets = filteredByModal.filter((ticket) => {
     if (ticketView === "active") {
-      return ticket.status !== "closed";
+      return ticket.status !== "Closed";
     } else {
-      return ticket.status === "closed";
+      return ticket.status === "Closed";
     }
   });
 

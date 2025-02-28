@@ -55,7 +55,7 @@ const seedTickets = async () => {
         const randomComplaint = complaintOptions[Math.floor(Math.random() * complaintOptions.length)];
 
         // Randomly assign status (20% closed, 80% open) - tweak as desired
-        const randomStatus = Math.random() < 0.2 ? "closed" : "open";
+        const randomStatus = Math.random() < 0.2 ? "Closed" : "Open";
 
         const ticketData = {
           ticketNumber: randomTicketNumber,

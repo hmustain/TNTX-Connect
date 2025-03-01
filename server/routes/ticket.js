@@ -1,39 +1,29 @@
-  // server/routes/ticket.js
-  const express = require('express');
-  const router = express.Router();
-  const {
-    createTicket,
-    getTicketById,
-    updateTicket,
-    deleteTicket,
-    getMyTickets,
-    getAllTickets,
-    getCompanyTickets
-  } = require('../controllers/ticketController');
-  const { protect } = require('../middleware/auth');
+// server/routes/ticket.js
+const express = require('express');
+const router = express.Router();
+const {
+  createTicket,
+  getTicketById,
+  updateTicket,
+  deleteTicket,
+  getMyTickets,
+  getAllTickets,
+  getCompanyTickets,
+} = require('../controllers/ticketController');
+const { protect } = require('../middleware/auth');
+const upload = require('../middleware/upload');
 
-  // Use protect middleware to require authentication to all routes in this router
-  router.use(protect);
+router.use(protect);
 
-  // Create a ticket
-  router.post('/', createTicket);
+// Unified endpoint for ticket creation (supports breakdown fields)
+router.post('/', upload.array('photos', 10), createTicket);
 
-  // Get all tickets (admin/agents)
-  router.get('/', getAllTickets);
+// Other endpoints remain unchanged
+router.get('/', getAllTickets);
+router.get('/mytickets', getMyTickets);
+router.get('/company', getCompanyTickets);
+router.get('/:id', getTicketById);
+router.put('/:id', updateTicket);
+router.delete('/:id', deleteTicket);
 
-  // Get ticket by authenticated user (driver)
-  router.get('/mytickets', getMyTickets);
-
-  //Get tickets by associated with company (for company users)
-  router.get('/company', getCompanyTickets);
-
-  // Get single ticket by ID
-  router.get('/:id', getTicketById);
-
-  // Update ticket by ID
-  router.put('/:id', updateTicket);
-
-  // Delete ticket by ID
-  router.delete('/:id', deleteTicket);
-
-  module.exports = router;
+module.exports = router;

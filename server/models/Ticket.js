@@ -37,7 +37,7 @@ const ticketSchema = new mongoose.Schema(
     },
     trailerNumber: {
       type: String,
-      required: [true, 'Please add the trailer number'],
+      required: [false, 'Please add the trailer number'],
     },
     loadStatus: {
       type: String,

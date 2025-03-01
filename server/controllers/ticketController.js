@@ -5,68 +5,61 @@ exports.createTicket = async (req, res) => {
   try {
     // Extract standard and breakdown-specific fields from req.body.
     const {
-      // Breakdown fields (some will be ignored)
-      firstName,
-      lastName,
-      phoneNumber,
-      email,
-      company, // Should be an ObjectId (or string convertible to one)
-      unitAffected,
-      complaint,
-      tractorNumber,
-      make, // Not stored in Ticket model (could be stored elsewhere)
-      model, // Not stored in Ticket model (could be stored elsewhere)
+      truckNumber,
       vinLast8,
+      mileage,
       trailerNumber,
       loadStatus,
       loadNumber,
+      unitAffected,
+      complaint,
       currentLocation,
-      locationName,
       address,
       city,
       state,
-      tireRelated, // Not stored in current Ticket model
-      tireSize, // Not stored
-      tirePosition, // Not stored
-      tireBrand, // Not stored
-      damageDescription, // Not stored
+      driverPhone,
+      // Additional breakdown field:
+      breakdownDescription,
+      // Optionally, other fields such as firstName, lastName, etc. can be extracted if needed
+      company, // Optionally provided; fallback to req.user.company below
     } = req.body;
 
     // Process file uploads (if any)
-    const mediaPaths = req.files ? req.files.map((file) => file.path) : [];
+    const mediaPaths = req.files ? req.files.map(file => file.path) : [];
 
-    // Auto-generate a ticket number:
+    // Auto-generate a unique ticket number:
     const lastTicket = await Ticket.findOne().sort({ createdAt: -1 });
-    const lastTicketNumber = lastTicket
-      ? parseInt(lastTicket.ticketNumber, 10)
-      : 0;
-    const newTicketNumber = (lastTicketNumber + 1).toString().padStart(5, "0");
+    const lastTicketNumber = lastTicket ? parseInt(lastTicket.ticketNumber, 10) : 0;
+    const newTicketNumber = (lastTicketNumber + 1).toString().padStart(5, '0');
 
-    // Build the ticket data object. Map fields from the breakdown form to Ticket model fields.
+    // Build the ticket data object.
     const ticketData = {
       ticketNumber: newTicketNumber,
-      user: req.user._id, // Assumes the authenticated user is in req.user
+      user: req.user._id, // Assumes req.user is populated by your auth middleware
       company: company || req.user.company, // Use provided company or default to user's company
-      driverPhone: phoneNumber, // Use breakdown field phoneNumber
-      truckNumber: tractorNumber, // Map tractorNumber to truckNumber
+      driverPhone: driverPhone,
+      truckNumber: truckNumber,
       vinLast8: vinLast8,
-      mileage: req.body.mileage || 0, // Optionally provided, defaulting to 0 if missing
+      mileage: mileage || 0,
       trailerNumber: trailerNumber,
       loadStatus: loadStatus,
-      loadNumber: loadStatus === "loaded" ? loadNumber : undefined,
+      loadNumber: loadStatus === 'loaded' ? loadNumber : undefined,
       unitAffected: unitAffected,
       complaint: complaint,
       currentLocation: currentLocation,
+      // Use address for the physical address; if not provided, fallback to an empty string
       locationAddress: address || "",
       city: city || "",
       state: state || "",
       media: mediaPaths,
       status: "Open", // Default status on creation
+      breakdownDescription: breakdownDescription || "", // New field for additional breakdown context
     };
 
     // Create the ticket in the database
     const ticket = await Ticket.create(ticketData);
-    // Populate the user and company fields so you can see their names
+
+    // Populate the user and company fields so you can see their names in the response
     await ticket.populate("user", "name");
     await ticket.populate("company", "name");
 

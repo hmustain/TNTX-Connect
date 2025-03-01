@@ -74,8 +74,13 @@ const ticketSchema = new mongoose.Schema(
     },
     city: {
       type: String,
+      required: [true, 'Please provide the current City'],
     },
     state: {
+      type: String,
+      required: [true, 'Please provide the current State'],
+    },
+    breakdownDescription:{
       type: String,
     },
     media: [

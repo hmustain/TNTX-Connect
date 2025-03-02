@@ -29,7 +29,9 @@ const renderElapsedTimeExtended = (createdAt) => {
       .toString()
       .padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
   }
-  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
+  return `${hours.toString().padStart(2, "0")}:${minutes
+    .toString()
+    .padStart(2, "0")}`;
 };
 
 const LandingScreen = () => {
@@ -52,7 +54,8 @@ const LandingScreen = () => {
   // First apply additional filters from FilterModal (if any)
   const filteredByModal = tickets.filter((ticket) => {
     if (filter.status && ticket.status !== filter.status) return false;
-    if (filter.unitType && ticket.unitAffected !== filter.unitType) return false;
+    if (filter.unitType && ticket.unitAffected !== filter.unitType)
+      return false;
     return true;
   });
 
@@ -89,7 +92,11 @@ const LandingScreen = () => {
               >
                 Historical Tickets
               </Button>
-              <Button variant="secondary" className="me-2 mb-2">
+              <Button
+                variant="secondary"
+                className="me-2 mb-2"
+                onClick={() => navigate("/breakdown")}
+              >
                 Submit a Breakdown Ticket
               </Button>
             </Col>

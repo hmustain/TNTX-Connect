@@ -2,6 +2,7 @@
   "name": "tntx-connect",
   "version": "1.0.0",
   "private": true,
+  "proxy": "http://localhost:5000",
   "scripts": {
     "start:server": "cd server && npm start",
     "start:client": "cd client && npm start",

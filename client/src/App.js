@@ -5,6 +5,7 @@ import Layout from './components/Layout';
 import LandingScreen from './components/LandingScreen';
 import LoginScreen from './components/LoginScreen';
 import TicketScreen from './components/TicketScreen';
+import BreakdownTicketForm from './components/BreakdownTicketForm';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
             <Route path="/" element={<LandingScreen />} />
             <Route path="/login" element={<LoginScreen />} />
             <Route path="/ticket/:id" element={<TicketScreen />} />
+            <Route path="/breakdown" element={<BreakdownTicketForm />}/>
             {/* You can add other routes like /profile etc. */}
           </Route>
         </Routes>

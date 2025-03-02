@@ -188,7 +188,7 @@ const LandingScreen = () => {
                       <td>{ticket.truckNumber}</td>
                       <td>{ticket.trailerNumber}</td>
                       <td>{ticket.complaint}</td>
-                      <td>{ticket.currentLocation}</td>
+                      <td>{ticket.city + "," + ticket.state}</td>
                       <td>{ticket.user && ticket.user.name}</td>
                       <td>{"AUTH-1234"}</td>
                       <td>{new Date(ticket.createdAt).toLocaleDateString()}</td>

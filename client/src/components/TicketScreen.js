@@ -9,25 +9,16 @@ import {
   Form
 } from "react-bootstrap";
 
-/*Container Layout
-  1) Top-left: Ticket Info
-  2) Bottom-left: Chat
-  3) Top-right: Unit Details
-  4) Bottom-right: Driver Info
-*/
-
 const TicketScreen = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Example state for ticket and chat
   const [ticket, setTicket] = useState(null);
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [chatLoading, setChatLoading] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
 
-  // For demonstration, we’ll do minimal fetch logic here:
   const token = localStorage.getItem("authToken");
 
   useEffect(() => {
@@ -117,7 +108,7 @@ const TicketScreen = () => {
     );
   }
 
-  // Destructure fields for easier usage:
+  // Destructure fields for easier usage
   const {
     ticketNumber,
     status,
@@ -132,7 +123,9 @@ const TicketScreen = () => {
     vinLast8,
     mileage,
     loadStatus,
-    // You might have other fields...
+    breakdownDescription,
+    city,
+    state,
   } = ticket;
 
   return (
@@ -142,13 +135,14 @@ const TicketScreen = () => {
         <Button variant="secondary" onClick={() => navigate("/")}>
           Back to Tickets
         </Button>
-        {/* Optionally replicate some CTA buttons here, or "Print Ticket", etc. */}
+        {/* Optionally replicate CTA buttons here (e.g. Print, etc.) */}
       </div>
 
-      {/* 2 Rows, each with 2 Cols. Left Col ~ 75%, Right Col ~ 25% */}
+      {/* Row 1: Left (Ticket Info & Breakdown) - Right (Unit Details) */}
       <Row>
-        {/* Top-Left (Ticket Info) */}
+        {/* Left column (md=9) */}
         <Col md={9}>
+          {/* Ticket Info Card */}
           <Card className="mb-3">
             <Card.Header as="h5">Ticket Info</Card.Header>
             <Card.Body>
@@ -157,26 +151,44 @@ const TicketScreen = () => {
                   <p><strong>Ticket #:</strong> {ticketNumber}</p>
                   <p><strong>Status:</strong> {status || "Pending"}</p>
                   <p><strong>Complaint:</strong> {complaint}</p>
-                  <p><strong>Location:</strong> {currentLocation}</p>
+                  <p><strong>Location:</strong> 
+                    {" "}
+                    {city ? `${city}, ${state}` : currentLocation}
+                  </p>
                   <p><strong>Date Created:</strong> {new Date(createdAt).toLocaleDateString()}</p>
                 </Col>
                 <Col md={6}>
                   <p><strong>Company:</strong> {company?.name || "N/A"}</p>
                   <p><strong>Driver Name:</strong> {user?.name || "N/A"}</p>
-                  {/* Add any additional ticket fields you like */}
+                  {/* Example vendor info placeholders */}
+                  <p><strong>Vendor Name:</strong> Default Vendor</p>
+                  <p><strong>Vendor Phone #:</strong> 555-555-5555</p>
+                  <p><strong>Vendor Email:</strong> vendor@example.com</p>
                 </Col>
               </Row>
             </Card.Body>
           </Card>
+
+          {/* Breakdown Description Card */}
+          <Card className="mb-3">
+            <Card.Header as="h5">Breakdown Description</Card.Header>
+            <Card.Body>
+              <p>
+                <strong>Breakdown Description:</strong>{" "}
+                {breakdownDescription || "No Description Provided"}
+              </p>
+            </Card.Body>
+          </Card>
         </Col>
 
-        {/* Top-Right (Unit Details) */}
+        {/* Right column (md=3) - Unit Details */}
         <Col md={3}>
           <Card className="mb-3">
             <Card.Header as="h5">Unit Details</Card.Header>
             <Card.Body>
               <p><strong>Unit Type:</strong> {unitAffected}</p>
-              <p><strong>Make/Model:</strong> {/* If you have them, otherwise remove */}</p>
+              <p><strong>Make:</strong> Default</p>
+              <p><strong>Model:</strong> Default</p>
               <p><strong>Tractor #:</strong> {truckNumber}</p>
               <p><strong>Trailer #:</strong> {trailerNumber}</p>
               <p><strong>VIN Last 8:</strong> {vinLast8}</p>
@@ -187,8 +199,9 @@ const TicketScreen = () => {
         </Col>
       </Row>
 
+      {/* Row 2: Left (Chat) - Right (Driver Info) */}
       <Row>
-        {/* Bottom-Left (Chat) */}
+        {/* Chat section (md=9) */}
         <Col md={9}>
           <Card className="mb-3">
             <Card.Header as="h5">Chat</Card.Header>
@@ -248,7 +261,7 @@ const TicketScreen = () => {
           </Card>
         </Col>
 
-        {/* Bottom-Right (Driver Info) */}
+        {/* Driver Info (md=3) */}
         <Col md={3}>
           <Card>
             <Card.Header as="h5">Driver Info</Card.Header>

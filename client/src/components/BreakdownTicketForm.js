@@ -306,7 +306,7 @@ const BreakdownTicketForm = () => {
           )}
         </Row>
 
-        <Form.Group controlId="currentLocation" className="mb-3">
+        {/* <Form.Group controlId="currentLocation" className="mb-3">
           <Form.Label>Location</Form.Label>
           <Form.Control
             type="text"
@@ -315,7 +315,7 @@ const BreakdownTicketForm = () => {
             onChange={handleChange}
             required
           />
-        </Form.Group>
+        </Form.Group> */}
 
         <Row className="mb-3">
           <Col>

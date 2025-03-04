@@ -443,7 +443,7 @@ const BreakdownTicketForm = () => {
           />
         </Form.Group>
 
-        <Button variant="dark" type="submit" className="w-100" disabled={submitting}>
+        <Button variant="dark" type="submit" className="w-100 mb-4" disabled={submitting}>
           {submitting ? "Submitting..." : "Submit Ticket"}
         </Button>
       </Form>

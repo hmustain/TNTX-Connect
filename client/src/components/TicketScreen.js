@@ -1,13 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  Container,
-  Row,
-  Col,
-  Card,
-  Button,
-  Form
-} from "react-bootstrap";
+import { Container, Row, Col, Card, Button, Form } from "react-bootstrap";
 
 const TicketScreen = () => {
   const { id } = useParams();
@@ -135,55 +128,88 @@ const TicketScreen = () => {
         <Button variant="secondary" onClick={() => navigate("/")}>
           Back to Tickets
         </Button>
-        {/* Optionally replicate CTA buttons here (e.g. Print, etc.) */}
       </div>
 
-      {/* Row 1: Left (Ticket Info & Breakdown) - Right (Unit Details) */}
-      <Row>
-        {/* Left column (md=9) */}
+      {/* ROW 1 (with margin-bottom so Row 2 isn’t “on top” of it) */}
+      <Row className="align-items-stretch mb-4">
+        {/* LEFT: Ticket Info + Breakdown (fills height) */}
         <Col md={9}>
-          {/* Ticket Info Card */}
-          <Card className="mb-3">
-            <Card.Header as="h5">Ticket Info</Card.Header>
-            <Card.Body>
-              <Row>
-                <Col md={6}>
-                  <p><strong>Ticket #:</strong> {ticketNumber}</p>
-                  <p><strong>Status:</strong> {status || "Pending"}</p>
-                  <p><strong>Complaint:</strong> {complaint}</p>
-                  <p><strong>Location:</strong> 
-                    {" "}
-                    {city ? `${city}, ${state}` : currentLocation}
-                  </p>
-                  <p><strong>Date Created:</strong> {new Date(createdAt).toLocaleDateString()}</p>
-                </Col>
-                <Col md={6}>
-                  <p><strong>Company:</strong> {company?.name || "N/A"}</p>
-                  <p><strong>Driver Name:</strong> {user?.name || "N/A"}</p>
-                  {/* Example vendor info placeholders */}
-                  <p><strong>Vendor Name:</strong> Default Vendor</p>
-                  <p><strong>Vendor Phone #:</strong> 555-555-5555</p>
-                  <p><strong>Vendor Email:</strong> vendor@example.com</p>
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
+          <div
+            className="d-grid"
+            style={{
+              gridTemplateRows: "auto 1fr",
+              height: "100%",
+              gap: "1rem",
+            }}
+          >
+            {/* Ticket Info Card */}
+            <Card>
+              <Card.Header as="h5">Ticket Info</Card.Header>
+              <Card.Body>
+                <Row>
+                  <Col md={6}>
+                    <p><strong>Ticket #:</strong> {ticketNumber}</p>
+                    <p><strong>Status:</strong> {status || "Pending"}</p>
+                    <p><strong>Complaint:</strong> {complaint}</p>
+                    <p>
+                      <strong>Location:</strong>{" "}
+                      {city ? `${city}, ${state}` : currentLocation}
+                    </p>
+                    <p>
+                      <strong>Date Created:</strong>{" "}
+                      {new Date(createdAt).toLocaleDateString()}
+                    </p>
+                  </Col>
+                  <Col md={6}>
+                    <p><strong>Company:</strong> {company?.name || "N/A"}</p>
+                    <p><strong>Driver Name:</strong> {user?.name || "N/A"}</p>
+                    <p><strong>Vendor Name:</strong> Default Vendor</p>
+                    <p><strong>Vendor Phone #:</strong> 555-555-5555</p>
+                    <p><strong>Vendor Email:</strong> vendor@example.com</p>
+                  </Col>
+                </Row>
+              </Card.Body>
+            </Card>
 
-          {/* Breakdown Description Card */}
-          <Card className="mb-3">
-            <Card.Header as="h5">Breakdown Description</Card.Header>
-            <Card.Body>
-              <p>
-                <strong>Breakdown Description:</strong>{" "}
-                {breakdownDescription || "No Description Provided"}
-              </p>
-            </Card.Body>
-          </Card>
+            {/* Breakdown Description Card (stretch to fill) */}
+            <Card className="h-100">
+              <Card.Header as="h5">Breakdown Description</Card.Header>
+              <Card.Body>
+                <p>
+                  <strong>Breakdown Description:</strong>{" "}
+                  {breakdownDescription || "No Description Provided"}
+                </p>
+              </Card.Body>
+            </Card>
+          </div>
         </Col>
 
-        {/* Right column (md=3) - Unit Details */}
+        {/* RIGHT: Attachments & Unit Details (stacked) */}
         <Col md={3}>
           <Card className="mb-3">
+            <Card.Header as="h5">Attachments</Card.Header>
+            <Card.Body>
+              {ticket.attachments && ticket.attachments.length > 0 ? (
+                <ul>
+                  {ticket.attachments.map((file, idx) => (
+                    <li key={idx}>
+                      <a
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {file.filename}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>No attachments available.</p>
+              )}
+            </Card.Body>
+          </Card>
+
+          <Card>
             <Card.Header as="h5">Unit Details</Card.Header>
             <Card.Body>
               <p><strong>Unit Type:</strong> {unitAffected}</p>
@@ -199,9 +225,9 @@ const TicketScreen = () => {
         </Col>
       </Row>
 
-      {/* Row 2: Left (Chat) - Right (Driver Info) */}
+      {/* ROW 2: Chat + Driver Info */}
       <Row>
-        {/* Chat section (md=9) */}
+        {/* LEFT: Chat */}
         <Col md={9}>
           <Card className="mb-3">
             <Card.Header as="h5">Chat</Card.Header>
@@ -261,7 +287,7 @@ const TicketScreen = () => {
           </Card>
         </Col>
 
-        {/* Driver Info (md=3) */}
+        {/* RIGHT: Driver Info */}
         <Col md={3}>
           <Card>
             <Card.Header as="h5">Driver Info</Card.Header>

@@ -27,6 +27,17 @@ const complaintOptions = [
   "PM Service"
 ];
 
+// Arrays for random location data
+const cities = ["Texarkana", "Dallas", "Houston", "Austin", "San Antonio"];
+const states = ["Texas", "Texas", "Texas", "Texas", "Texas"];
+const addresses = [
+  "109 Kings Hwy",
+  "123 Main St",
+  "456 Elm St",
+  "789 Oak Ave",
+  "321 Pine Rd"
+];
+
 const seedTickets = async () => {
   try {
     await connectDB();
@@ -54,8 +65,13 @@ const seedTickets = async () => {
         // Pick a random complaint from the array
         const randomComplaint = complaintOptions[Math.floor(Math.random() * complaintOptions.length)];
 
-        // Randomly assign status (20% closed, 80% open) - tweak as desired
+        // Randomly assign status (20% closed, 80% open)
         const randomStatus = Math.random() < 0.2 ? "Closed" : "Open";
+
+        // Randomly select a city, state, and address
+        const randomCity = cities[Math.floor(Math.random() * cities.length)];
+        const randomState = states[Math.floor(Math.random() * states.length)];
+        const randomAddress = addresses[Math.floor(Math.random() * addresses.length)];
 
         const ticketData = {
           ticketNumber: randomTicketNumber,
@@ -68,14 +84,14 @@ const seedTickets = async () => {
           // Alternate loadStatus for variety
           loadStatus: i % 2 === 0 ? 'loaded' : 'empty',
           loadNumber: i % 2 === 0 ? `LOAD${Math.floor(Math.random() * 10000)}` : undefined,
-          // Use simpler complaint
           complaint: randomComplaint,
-          currentLocation: 'Test Location',
-          // Additional fields
+          currentLocation: 'Test Location',  // This remains as is
           unitAffected: Math.random() < 0.5 ? 'tractor' : 'trailer',
           driverPhone: "555-123-4567",
-          // Newly added status
-          status: randomStatus
+          status: randomStatus,
+          locationAddress: randomAddress,  // Physical address field
+          city: randomCity,
+          state: randomState,
         };
 
         ticketPromises.push(Ticket.create(ticketData));

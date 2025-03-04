@@ -1,6 +1,7 @@
 // server/controllers/authController.js
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const Company = require('../models/Company')
 
 // Function to register a new user
 const registerUser = async (req, res) => {

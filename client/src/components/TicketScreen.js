@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Container, Row, Col, Card, Button, Form } from "react-bootstrap";
+import "../ChatScreen.css";
 
 const TicketScreen = () => {
   const { id } = useParams();

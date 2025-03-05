@@ -6,14 +6,22 @@ const Ticket = require('../models/Ticket');
 exports.createChat = async (req, res) => {
   try {
     const chatData = req.body;
+    // Automatically assign the sender from the authenticated user
+    chatData.sender = req.user._id;
+    
     // Retrieve the ticket to get its associated company
     const ticket = await Ticket.findById(chatData.ticket);
     if (!ticket) {
       return res.status(404).json({ success: false, error: 'Ticket not found' });
     }
-    // Assign the company from the ticket to the chat message
+    // Optionally, assign the company from the ticket if needed
     chatData.company = ticket.company;
+    
+    // Create the chat
     const chat = await Chat.create(chatData);
+    // Populate the sender's name field in the response
+    await chat.populate('sender', 'name');
+    
     res.status(201).json({ success: true, data: chat });
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
@@ -45,7 +53,8 @@ exports.getChatsByTicket = async (req, res) => {
       return res.status(403).json({ success: false, error: 'Not authorized' });
     }
 
-    const chats = await Chat.find({ ticket: ticketId });
+    const chats = await Chat.find({ ticket: ticketId })
+  .populate('sender', 'name');
     res.status(200).json({ success: true, data: chats });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });

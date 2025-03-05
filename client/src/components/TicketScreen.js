@@ -41,11 +41,11 @@ const TicketScreen = () => {
     const fetchChats = async () => {
       try {
         setChatLoading(true);
-        const res = await fetch(`/api/chats?ticketId=${id}`, {
+        const res = await fetch(`/api/chats/ticket/${id}`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
-          },
+          },  
         });
         if (!res.ok) throw new Error("Unauthorized or Chat not found");
         const data = await res.json();

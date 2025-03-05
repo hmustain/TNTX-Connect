@@ -48,20 +48,23 @@ router.get("/repair-orders", async (req, res) => {
             }
         }
     );
-    
-    
-    
-    // Convert XML to JSON
-    const parser = new xml2js.Parser({ explicitArray: false });
-    const jsonResponse = await parser.parseStringPromise(response.data);
+        
+// Convert XML to JSON
+const parser = new xml2js.Parser({ explicitArray: false });
+const jsonResponse = await parser.parseStringPromise(response.data);
 
-    res.json(jsonResponse);
-  } catch (error) {
-    console.error("Error fetching repair orders:", error.response ? error.response.data : error.message);
-    res.status(500).json({ 
-        error: "Failed to fetch repair orders",
-        details: error.response ? error.response.data : "No response from server"
-    });    
+// Ensure the response contains Orders and limit the results to 10
+const ordersPath = jsonResponse["s:Envelope"]?.["s:Body"]?.["OrderListingResMessage"]?.["Result"]?.["Orders"];
+
+if (ordersPath) {
+    jsonResponse["s:Envelope"]["s:Body"]["OrderListingResMessage"]["Result"]["Orders"] = ordersPath.slice(0, 10);
+}
+
+
+res.json(jsonResponse);
+  } catch (error) {  // ✅ This catch block was missing
+    console.error("Error fetching repair orders:", error.message);
+    res.status(500).json({ error: "Failed to fetch repair orders" });
   }
 });
 

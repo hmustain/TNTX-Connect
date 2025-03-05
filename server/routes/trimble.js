@@ -43,7 +43,6 @@ router.get("/repair-orders", async (req, res) => {
             headers: {
                 "Content-Type": "text/xml; charset=utf-8",
                 "Accept": "text/xml",
-                "SOAPAction": "http://tmwsystems.com/AMS/GetOrderDetailsParamMessage"  // Try setting SOAPAction
             }
         }
     );

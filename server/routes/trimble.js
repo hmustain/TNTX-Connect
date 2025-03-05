@@ -43,9 +43,11 @@ router.get("/repair-orders", async (req, res) => {
             headers: {
                 "Content-Type": "text/xml; charset=utf-8",
                 "Accept": "text/xml",
+                "SOAPAction": "http://tmwsystems.com/AMS/IIntegrationToolKit/GetOrderDetailsParamMessage"
             }
         }
     );
+    
     
     // Convert XML to JSON
     const parser = new xml2js.Parser({ explicitArray: false });

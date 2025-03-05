@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Container, Row, Col, Card, Button, Form } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Button,
+  Form,
+  InputGroup,
+} from "react-bootstrap";
+import EmojiPicker from "emoji-picker-react";
 import AuthContext from "../context/AuthContext";
 import "../ChatScreen.css";
 
@@ -15,10 +24,9 @@ const TicketScreen = () => {
   const [loading, setLoading] = useState(true);
   const [chatLoading, setChatLoading] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const token = localStorage.getItem("authToken");
-
-  // Create a ref for the chat container
   const chatContainerRef = useRef(null);
 
   useEffect(() => {
@@ -68,12 +76,19 @@ const TicketScreen = () => {
     fetchChats();
   }, [id, token]);
 
-  // Auto-scroll to the bottom of the chat container when chats update
+  // Auto-scroll to the bottom when chats update
   useEffect(() => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
     }
   }, [chats]);
+
+  // Updated callback: parameters are (emojiData, event)
+  const handleEmojiClick = (emojiData, event) => {
+    setChatMessage((prev) => prev + emojiData.emoji);
+    setShowEmojiPicker(false);
+  };
 
   const handleSendChat = async (e) => {
     e.preventDefault();
@@ -137,7 +152,7 @@ const TicketScreen = () => {
 
   return (
     <Container className="my-4">
-      {/* Top Navigation / CTA */}
+      {/* Top Navigation */}
       <div className="d-flex justify-content-between mb-3">
         <Button variant="secondary" onClick={() => navigate("/")}>
           Back to Tickets
@@ -147,35 +162,65 @@ const TicketScreen = () => {
       {/* ROW 1: Ticket Info & Breakdown */}
       <Row className="align-items-stretch mb-4">
         <Col md={9}>
-          <div className="d-grid" style={{ gridTemplateRows: "auto 1fr", height: "100%", gap: "1rem" }}>
-            {/* Ticket Info Card */}
+          <div
+            className="d-grid"
+            style={{
+              gridTemplateRows: "auto 1fr",
+              height: "100%",
+              gap: "1rem",
+            }}
+          >
             <Card>
               <Card.Header as="h5">Ticket Info</Card.Header>
               <Card.Body>
                 <Row>
                   <Col md={6}>
-                    <p><strong>Ticket #:</strong> {ticketNumber}</p>
-                    <p><strong>Status:</strong> {status || "Pending"}</p>
-                    <p><strong>Complaint:</strong> {complaint}</p>
-                    <p><strong>Location:</strong> {city ? `${city}, ${state}` : currentLocation}</p>
-                    <p><strong>Date Created:</strong> {new Date(createdAt).toLocaleDateString()}</p>
+                    <p>
+                      <strong>Ticket #:</strong> {ticketNumber}
+                    </p>
+                    <p>
+                      <strong>Status:</strong> {status || "Pending"}
+                    </p>
+                    <p>
+                      <strong>Complaint:</strong> {complaint}
+                    </p>
+                    <p>
+                      <strong>Location:</strong>{" "}
+                      {city ? `${city}, ${state}` : currentLocation}
+                    </p>
+                    <p>
+                      <strong>Date Created:</strong>{" "}
+                      {new Date(createdAt).toLocaleDateString()}
+                    </p>
                   </Col>
                   <Col md={6}>
-                    <p><strong>Company:</strong> {company?.name || "N/A"}</p>
-                    <p><strong>Driver Name:</strong> {user?.name || "N/A"}</p>
-                    <p><strong>Vendor Name:</strong> Default Vendor</p>
-                    <p><strong>Vendor Phone #:</strong> 555-555-5555</p>
-                    <p><strong>Vendor Email:</strong> vendor@example.com</p>
+                    <p>
+                      <strong>Company:</strong> {company?.name || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Driver Name:</strong> {user?.name || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Vendor Name:</strong> Default Vendor
+                    </p>
+                    <p>
+                      <strong>Vendor Phone #:</strong> 555-555-5555
+                    </p>
+                    <p>
+                      <strong>Vendor Email:</strong> vendor@example.com
+                    </p>
                   </Col>
                 </Row>
               </Card.Body>
             </Card>
 
-            {/* Breakdown Description Card */}
             <Card className="h-100">
               <Card.Header as="h5">Breakdown Description</Card.Header>
               <Card.Body>
-                <p><strong>Breakdown Description:</strong> {breakdownDescription || "No Description Provided"}</p>
+                <p>
+                  <strong>Breakdown Description:</strong>{" "}
+                  {breakdownDescription || "No Description Provided"}
+                </p>
               </Card.Body>
             </Card>
           </div>
@@ -190,7 +235,11 @@ const TicketScreen = () => {
                 <ul>
                   {ticket.attachments.map((file, idx) => (
                     <li key={idx}>
-                      <a href={file.url} target="_blank" rel="noopener noreferrer">
+                      <a
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
                         {file.filename}
                       </a>
                     </li>
@@ -204,14 +253,30 @@ const TicketScreen = () => {
           <Card>
             <Card.Header as="h5">Unit Details</Card.Header>
             <Card.Body>
-              <p><strong>Unit Type:</strong> {unitAffected}</p>
-              <p><strong>Make:</strong> Default</p>
-              <p><strong>Model:</strong> Default</p>
-              <p><strong>Tractor #:</strong> {truckNumber}</p>
-              <p><strong>Trailer #:</strong> {trailerNumber}</p>
-              <p><strong>VIN Last 8:</strong> {vinLast8}</p>
-              <p><strong>Mileage:</strong> {mileage}</p>
-              <p><strong>Load Status:</strong> {loadStatus}</p>
+              <p>
+                <strong>Unit Type:</strong> {unitAffected}
+              </p>
+              <p>
+                <strong>Make:</strong> Default
+              </p>
+              <p>
+                <strong>Model:</strong> Default
+              </p>
+              <p>
+                <strong>Tractor #:</strong> {truckNumber}
+              </p>
+              <p>
+                <strong>Trailer #:</strong> {trailerNumber}
+              </p>
+              <p>
+                <strong>VIN Last 8:</strong> {vinLast8}
+              </p>
+              <p>
+                <strong>Mileage:</strong> {mileage}
+              </p>
+              <p>
+                <strong>Load Status:</strong> {loadStatus}
+              </p>
             </Card.Body>
           </Card>
         </Col>
@@ -232,11 +297,18 @@ const TicketScreen = () => {
                     <p>No chat messages yet.</p>
                   ) : (
                     chats.map((chat) => {
-                      const isCurrentUser = chat.sender && chat.sender._id === currentUserId;
+                      const isCurrentUser =
+                        chat.sender && chat.sender._id === currentUserId;
                       return (
-                        <div key={chat._id} className={`chat-bubble ${isCurrentUser ? "sender" : "receiver"}`}>
+                        <div
+                          key={chat._id}
+                          className={`chat-bubble ${
+                            isCurrentUser ? "sender" : "receiver"
+                          }`}
+                        >
                           <p style={{ margin: 0 }}>
-                            <strong>{chat.sender?.name || "System"}</strong>: {chat.message}
+                            <strong>{chat.sender?.name || "System"}</strong>:{" "}
+                            {chat.message}
                           </p>
                           <small className="chat-timestamp">
                             {new Date(chat.createdAt).toLocaleString()}
@@ -248,19 +320,56 @@ const TicketScreen = () => {
                 </div>
               )}
 
-              <Form onSubmit={handleSendChat}>
-                <Form.Group controlId="chatMessage">
+              {/* Chat Input Section with Emoji Picker and Up Arrow */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  marginBottom: "0.5rem",
+                  position: "relative",
+                }}
+              >
+                <Button
+                  variant="link"
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  style={{ fontSize: "1.5rem", marginRight: "0.5rem" }}
+                >
+                  😀
+                </Button>
+                <InputGroup style={{ flexGrow: 1 }}>
                   <Form.Control
                     type="text"
                     placeholder="Type your message..."
                     value={chatMessage}
                     onChange={(e) => setChatMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && chatMessage.trim() !== "") {
+                        e.preventDefault(); // prevent a newline if needed
+                        handleSendChat(e);
+                      }
+                    }}
                   />
-                </Form.Group>
-                <Button variant="dark" type="submit" className="mt-2 w-100">
-                  Send
-                </Button>
-              </Form>
+                  {chatMessage.trim() !== "" && (
+                    <Button
+                      variant="dark"
+                      type="submit"
+                      onClick={handleSendChat}
+                      style={{ marginLeft: "5px" }}
+                    >
+                      ↑
+                    </Button>
+                  )}
+                </InputGroup>
+              </div>
+
+              {/* Emoji Picker */}
+              {showEmojiPicker && (
+                <div
+                  style={{ position: "absolute", bottom: "150px", zIndex: 10 }}
+                >
+                  <EmojiPicker onEmojiClick={handleEmojiClick} />
+                </div>
+              )}
             </Card.Body>
           </Card>
         </Col>
@@ -270,10 +379,18 @@ const TicketScreen = () => {
           <Card>
             <Card.Header as="h5">Driver Info</Card.Header>
             <Card.Body>
-              <p><strong>Name:</strong> {user?.name || "N/A"}</p>
-              <p><strong>Phone:</strong> {user?.phone || "N/A"}</p>
-              <p><strong>Email:</strong> {user?.email || "N/A"}</p>
-              <p><strong>Company:</strong> {company?.name || "N/A"}</p>
+              <p>
+                <strong>Name:</strong> {user?.name || "N/A"}
+              </p>
+              <p>
+                <strong>Phone:</strong> {user?.phone || "N/A"}
+              </p>
+              <p>
+                <strong>Email:</strong> {user?.email || "N/A"}
+              </p>
+              <p>
+                <strong>Company:</strong> {company?.name || "N/A"}
+              </p>
             </Card.Body>
           </Card>
         </Col>

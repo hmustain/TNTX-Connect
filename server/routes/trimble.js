@@ -37,16 +37,17 @@ router.get("/repair-orders", async (req, res) => {
     console.log("Sending SOAP request:\n", soapRequest);
 
     const response = await axios.post(
-      process.env.TRIMBLE_API_URL,
-      soapRequest,
-      {
-        headers: {
-          "Content-Type": "text/xml",
-          Accept: "text/xml",
-        },
-      }
+        process.env.TRIMBLE_API_URL,
+        soapRequest,
+        {
+            headers: {
+                "Content-Type": "text/xml; charset=utf-8",
+                "Accept": "text/xml",
+                "SOAPAction": "http://tmwsystems.com/AMS/GetOrderDetailsParamMessage"  // Try setting SOAPAction
+            }
+        }
     );
-
+    
     // Convert XML to JSON
     const parser = new xml2js.Parser({ explicitArray: false });
     const jsonResponse = await parser.parseStringPromise(response.data);

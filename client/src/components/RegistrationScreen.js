@@ -98,7 +98,7 @@ const RegistrationScreen = () => {
           Register
         </Button>
       </Form>
-      <div style={{ marginTop: '15px', textAlign: 'center' }}>
+      <div style={{ marginBottom: '15px', textAlign: 'center'}}>
         <small>
           Already have an account? <Link to="/login">Click here to login</Link>
         </small>

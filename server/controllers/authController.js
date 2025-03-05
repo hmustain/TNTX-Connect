@@ -6,7 +6,7 @@ const Company = require('../models/Company')
 // Function to register a new user
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password, companyName } = req.body;
+    const { name, email, password, companyName, role } = req.body;
 
     // Find the company by name (case-insensitive)
     const company = await Company.findOne({ name: { $regex: new RegExp("^" + companyName + "$", "i") } });
@@ -20,6 +20,7 @@ const registerUser = async (req, res) => {
       name,
       email,
       password,
+      role,
       company: company._id // Assign the correct company ObjectId
     });
 

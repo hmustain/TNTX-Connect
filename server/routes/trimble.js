@@ -53,8 +53,11 @@ router.get("/repair-orders", async (req, res) => {
 
     res.json(jsonResponse);
   } catch (error) {
-    console.error("Error fetching repair orders:", error.message);
-    res.status(500).json({ error: "Failed to fetch repair orders" });
+    console.error("Error fetching repair orders:", error.response ? error.response.data : error.message);
+    res.status(500).json({ 
+        error: "Failed to fetch repair orders",
+        details: error.response ? error.response.data : "No response from server"
+    });    
   }
 });
 

@@ -1,11 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Container, Row, Col, Card, Button, Form } from "react-bootstrap";
+import AuthContext from "../context/AuthContext";
 import "../ChatScreen.css";
 
 const TicketScreen = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { authData } = useContext(AuthContext);
+  const currentUserId = authData?.user?._id;
 
   const [ticket, setTicket] = useState(null);
   const [chats, setChats] = useState([]);
@@ -46,7 +49,7 @@ const TicketScreen = () => {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
-          },  
+          },
         });
         if (!res.ok) throw new Error("Unauthorized or Chat not found");
         const data = await res.json();
@@ -131,18 +134,10 @@ const TicketScreen = () => {
         </Button>
       </div>
 
-      {/* ROW 1 (with margin-bottom so Row 2 isn’t “on top” of it) */}
+      {/* ROW 1: Ticket Info & Breakdown */}
       <Row className="align-items-stretch mb-4">
-        {/* LEFT: Ticket Info + Breakdown (fills height) */}
         <Col md={9}>
-          <div
-            className="d-grid"
-            style={{
-              gridTemplateRows: "auto 1fr",
-              height: "100%",
-              gap: "1rem",
-            }}
-          >
+          <div className="d-grid" style={{ gridTemplateRows: "auto 1fr", height: "100%", gap: "1rem" }}>
             {/* Ticket Info Card */}
             <Card>
               <Card.Header as="h5">Ticket Info</Card.Header>
@@ -152,14 +147,8 @@ const TicketScreen = () => {
                     <p><strong>Ticket #:</strong> {ticketNumber}</p>
                     <p><strong>Status:</strong> {status || "Pending"}</p>
                     <p><strong>Complaint:</strong> {complaint}</p>
-                    <p>
-                      <strong>Location:</strong>{" "}
-                      {city ? `${city}, ${state}` : currentLocation}
-                    </p>
-                    <p>
-                      <strong>Date Created:</strong>{" "}
-                      {new Date(createdAt).toLocaleDateString()}
-                    </p>
+                    <p><strong>Location:</strong> {city ? `${city}, ${state}` : currentLocation}</p>
+                    <p><strong>Date Created:</strong> {new Date(createdAt).toLocaleDateString()}</p>
                   </Col>
                   <Col md={6}>
                     <p><strong>Company:</strong> {company?.name || "N/A"}</p>
@@ -172,20 +161,17 @@ const TicketScreen = () => {
               </Card.Body>
             </Card>
 
-            {/* Breakdown Description Card (stretch to fill) */}
+            {/* Breakdown Description Card */}
             <Card className="h-100">
               <Card.Header as="h5">Breakdown Description</Card.Header>
               <Card.Body>
-                <p>
-                  <strong>Breakdown Description:</strong>{" "}
-                  {breakdownDescription || "No Description Provided"}
-                </p>
+                <p><strong>Breakdown Description:</strong> {breakdownDescription || "No Description Provided"}</p>
               </Card.Body>
             </Card>
           </div>
         </Col>
 
-        {/* RIGHT: Attachments & Unit Details (stacked) */}
+        {/* ROW 1: RIGHT - Attachments & Unit Details */}
         <Col md={3}>
           <Card className="mb-3">
             <Card.Header as="h5">Attachments</Card.Header>
@@ -194,11 +180,7 @@ const TicketScreen = () => {
                 <ul>
                   {ticket.attachments.map((file, idx) => (
                     <li key={idx}>
-                      <a
-                        href={file.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
+                      <a href={file.url} target="_blank" rel="noopener noreferrer">
                         {file.filename}
                       </a>
                     </li>
@@ -209,7 +191,6 @@ const TicketScreen = () => {
               )}
             </Card.Body>
           </Card>
-
           <Card>
             <Card.Header as="h5">Unit Details</Card.Header>
             <Card.Body>
@@ -226,9 +207,9 @@ const TicketScreen = () => {
         </Col>
       </Row>
 
-      {/* ROW 2: Chat + Driver Info */}
+      {/* ROW 2: Chat & Driver Info */}
       <Row>
-        {/* LEFT: Chat */}
+        {/* LEFT: Chat Section */}
         <Col md={9}>
           <Card className="mb-3">
             <Card.Header as="h5">Chat</Card.Header>
@@ -236,37 +217,23 @@ const TicketScreen = () => {
               {chatLoading ? (
                 <p>Loading chats...</p>
               ) : (
-                <div
-                  style={{
-                    maxHeight: "300px",
-                    overflowY: "auto",
-                    marginBottom: "1rem",
-                    border: "1px solid #ddd",
-                    padding: "0.5rem",
-                    borderRadius: "4px",
-                  }}
-                >
+                <div className="chat-container">
                   {chats.length === 0 ? (
                     <p>No chat messages yet.</p>
                   ) : (
-                    chats.map((chat) => (
-                      <div
-                        key={chat._id}
-                        style={{
-                          marginBottom: "0.5rem",
-                          borderBottom: "1px solid #ccc",
-                          paddingBottom: "0.5rem",
-                        }}
-                      >
-                        <p style={{ margin: 0 }}>
-                          <strong>{chat.sender?.name || "System"}</strong>:{" "}
-                          {chat.message}
-                        </p>
-                        <small>
-                          {new Date(chat.createdAt).toLocaleString()}
-                        </small>
-                      </div>
-                    ))
+                    chats.map((chat) => {
+                      const isCurrentUser = chat.sender && chat.sender._id === currentUserId;
+                      return (
+                        <div key={chat._id} className={`chat-bubble ${isCurrentUser ? "sender" : "receiver"}`}>
+                          <p style={{ margin: 0 }}>
+                            <strong>{chat.sender?.name || "System"}</strong>: {chat.message}
+                          </p>
+                          <small className="chat-timestamp">
+                            {new Date(chat.createdAt).toLocaleString()}
+                          </small>
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               )}
@@ -280,7 +247,7 @@ const TicketScreen = () => {
                     onChange={(e) => setChatMessage(e.target.value)}
                   />
                 </Form.Group>
-                <Button variant="primary" type="submit" className="mt-2">
+                <Button variant="primary" type="submit" className="mt-2 w-100">
                   Send
                 </Button>
               </Form>

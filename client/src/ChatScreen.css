@@ -1,0 +1,42 @@
+.chat-container {
+    max-height: 300px;
+    overflow-y: auto;
+    margin-bottom: 1rem;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  
+  /* Base chat bubble styling */
+  .chat-bubble {
+    padding: 10px 15px;
+    border-radius: 20px;
+    max-width: 70%;
+    word-wrap: break-word;
+  }
+  
+  /* For the current user's messages */
+  .chat-bubble.sender {
+    background-color: #444444;  /* dark grey */
+    color: #ffffff;
+    align-self: flex-end;
+    border-bottom-right-radius: 0;
+  }
+  
+  /* For messages from others */
+  .chat-bubble.receiver {
+    background-color: #ffffff;
+    color: #000000;
+    align-self: flex-start;
+    border-bottom-left-radius: 0;
+  }
+  
+  /* Timestamp styling */
+  .chat-timestamp {
+    font-size: 0.75rem;
+    color: #888;
+    margin-top: 3px;
+    text-align: right;
+  }
+  

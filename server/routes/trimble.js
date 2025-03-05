@@ -19,20 +19,20 @@ const escapeXML = (str) => {
 router.get("/repair-orders", async (req, res) => {
   try {
     const soapRequest = `
-<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ams="http://tmwsystems.com/AMS">
-    <soapenv:Header>
-        <ams:UserName>${process.env.TRIMBLE_USERNAME}</ams:UserName>
-        <ams:Password>${process.env.TRIMBLE_PASSWORD}</ams:Password>
-    </soapenv:Header>
-    <soapenv:Body>
-        <ams:GetOrderDetails>
-            <ams:Param>
-                <ams:OrderType>6</ams:OrderType>
-            </ams:Param>
-        </ams:GetOrderDetails>
-    </soapenv:Body>
-</soapenv:Envelope>`;
-
+    <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ams="http://tmwsystems.com/AMS">
+        <soapenv:Header>
+            <ams:UserName>${process.env.TRIMBLE_USERNAME}</ams:UserName>
+            <ams:Password>${process.env.TRIMBLE_PASSWORD}</ams:Password>
+        </soapenv:Header>
+        <soapenv:Body>
+            <ams:GetOrderDetailsParamMessage>  <!-- ✅ Corrected root element -->
+                <ams:Param>
+                    <ams:OrderType>6</ams:OrderType>
+                </ams:Param>
+            </ams:GetOrderDetailsParamMessage>  <!-- ✅ Corrected closing tag -->
+        </soapenv:Body>
+    </soapenv:Envelope>`;
+    
 
     // Log full SOAP request to debug issues
     console.log("Sending SOAP request:\n", soapRequest);

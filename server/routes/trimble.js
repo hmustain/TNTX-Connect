@@ -25,13 +25,14 @@ router.get("/repair-orders", async (req, res) => {
         <ams:Password>${process.env.TRIMBLE_PASSWORD}</ams:Password>
     </soapenv:Header>
     <soapenv:Body>
-        <ams:GetOrderDetailsParamMessage>
+        <ams:GetOrderDetails>
             <ams:Param>
                 <ams:OrderType>6</ams:OrderType>
-            </ams:Param>  <!-- Correctly closed tag -->
-        </ams:GetOrderDetailsParamMessage>
+            </ams:Param>
+        </ams:GetOrderDetails>
     </soapenv:Body>
 </soapenv:Envelope>`;
+
 
     // Log full SOAP request to debug issues
     console.log("Sending SOAP request:\n", soapRequest);
@@ -43,10 +44,11 @@ router.get("/repair-orders", async (req, res) => {
             headers: {
                 "Content-Type": "text/xml; charset=utf-8",
                 "Accept": "text/xml",
-                "SOAPAction": "http://tmwsystems.com/AMS/IIntegrationToolKit/GetOrderDetailsParamMessage"
+                "SOAPAction": "http://tmwsystems.com/AMS/IIntegrationToolKit/GetOrderDetails"
             }
         }
     );
+    
     
     
     // Convert XML to JSON

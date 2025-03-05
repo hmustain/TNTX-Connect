@@ -18,7 +18,8 @@ const seedCompanies = async () => {
       "Big M Trucking",
       "Ledwell",
       "FedEx",
-      "Melton Truck Lines"
+      "Melton Truck Lines",
+      "TNTX Solutions"
     ];
 
     // Map the company names into objects to be inserted

@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { Form, Button, Container, Alert } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import AuthContext from '../context/AuthContext';
 
 const LoginScreen = () => {
@@ -62,10 +62,15 @@ const LoginScreen = () => {
             onChange={(e) => setPassword(e.target.value)}
           />
         </Form.Group>
-        <Button variant="dark" type="submit">
+        <Button variant="dark" type="submit" className='w-100'>
           Login
         </Button>
       </Form>
+      <div style={{ marginTop: '15px', textAlign: 'center' }}>
+        <small>
+          Don't have an account? <Link to="/register">Click here to register</Link>
+        </small>
+      </div>
     </Container>
   );
 };

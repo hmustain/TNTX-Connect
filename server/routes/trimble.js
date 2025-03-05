@@ -12,7 +12,8 @@ const escapeXML = (str) => {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
+    .replace(/'/g, "&apos;")
+    .replace(/!/g, "&#33;");
 };
 
 router.get("/repair-orders", async (req, res) => {

@@ -21,7 +21,7 @@
 
 /* Chat bubble for the current user (sender) */
 .chat-bubble.sender {
-  background-color: #444444; /* Dark grey */
+  background-color: #555555; /* Dark grey */
   color: #ffffff;
   align-self: flex-end;
   border-bottom-right-radius: 0;
@@ -29,7 +29,7 @@
 
 /* Chat bubble for other users (receiver) */
 .chat-bubble.receiver {
-  background-color: #ffffff;
+  background-color: #e0e0e0;  /* A slightly darker off-white/light grey */
   color: #000000;
   align-self: flex-start;
   border-bottom-left-radius: 0;
@@ -38,7 +38,16 @@
 /* Timestamp styling */
 .chat-timestamp {
   font-size: 0.75rem;
-  color: #888;
+  /* color: #888; */
   margin-top: 3px;
   text-align: right;
 }
+
+.chat-bubble.sender .chat-timestamp {
+  color: #ccc; /* Lighter timestamp for dark background */
+}
+
+.chat-bubble.receiver .chat-timestamp {
+  color: #555; /* Darker timestamp for light background */
+}
+

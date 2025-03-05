@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Container, Row, Col, Card, Button, Form } from "react-bootstrap";
 import AuthContext from "../context/AuthContext";
@@ -17,6 +17,9 @@ const TicketScreen = () => {
   const [chatMessage, setChatMessage] = useState("");
 
   const token = localStorage.getItem("authToken");
+
+  // Create a ref for the chat container
+  const chatContainerRef = useRef(null);
 
   useEffect(() => {
     const fetchTicket = async () => {
@@ -64,6 +67,13 @@ const TicketScreen = () => {
     };
     fetchChats();
   }, [id, token]);
+
+  // Auto-scroll to the bottom of the chat container when chats update
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
+  }, [chats]);
 
   const handleSendChat = async (e) => {
     e.preventDefault();
@@ -217,7 +227,7 @@ const TicketScreen = () => {
               {chatLoading ? (
                 <p>Loading chats...</p>
               ) : (
-                <div className="chat-container">
+                <div className="chat-container" ref={chatContainerRef}>
                   {chats.length === 0 ? (
                     <p>No chat messages yet.</p>
                   ) : (
@@ -247,7 +257,7 @@ const TicketScreen = () => {
                     onChange={(e) => setChatMessage(e.target.value)}
                   />
                 </Form.Group>
-                <Button variant="primary" type="submit" className="mt-2 w-100">
+                <Button variant="dark" type="submit" className="mt-2 w-100">
                   Send
                 </Button>
               </Form>

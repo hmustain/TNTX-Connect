@@ -1,18 +1,33 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Container, Row, Col, Card, Button, Form } from "react-bootstrap";
+import {
+  Container,
+  Row,
+  Col,
+  Card,
+  Button,
+  Form,
+  InputGroup,
+} from "react-bootstrap";
+import EmojiPicker from "emoji-picker-react";
+import AuthContext from "../context/AuthContext";
+import "../ChatScreen.css";
 
 const TicketScreen = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { authData } = useContext(AuthContext);
+  const currentUserId = authData?.user?._id;
 
   const [ticket, setTicket] = useState(null);
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [chatLoading, setChatLoading] = useState(false);
   const [chatMessage, setChatMessage] = useState("");
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
   const token = localStorage.getItem("authToken");
+  const chatContainerRef = useRef(null);
 
   useEffect(() => {
     const fetchTicket = async () => {
@@ -41,7 +56,7 @@ const TicketScreen = () => {
     const fetchChats = async () => {
       try {
         setChatLoading(true);
-        const res = await fetch(`/api/chats?ticketId=${id}`, {
+        const res = await fetch(`/api/chats/ticket/${id}`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -60,6 +75,20 @@ const TicketScreen = () => {
     };
     fetchChats();
   }, [id, token]);
+
+  // Auto-scroll to the bottom when chats update
+  useEffect(() => {
+    if (chatContainerRef.current) {
+      chatContainerRef.current.scrollTop =
+        chatContainerRef.current.scrollHeight;
+    }
+  }, [chats]);
+
+  // Updated callback: parameters are (emojiData, event)
+  const handleEmojiClick = (emojiData, event) => {
+    setChatMessage((prev) => prev + emojiData.emoji);
+    setShowEmojiPicker(false);
+  };
 
   const handleSendChat = async (e) => {
     e.preventDefault();
@@ -123,16 +152,15 @@ const TicketScreen = () => {
 
   return (
     <Container className="my-4">
-      {/* Top Navigation / CTA */}
+      {/* Top Navigation */}
       <div className="d-flex justify-content-between mb-3">
         <Button variant="secondary" onClick={() => navigate("/")}>
           Back to Tickets
         </Button>
       </div>
 
-      {/* ROW 1 (with margin-bottom so Row 2 isn’t “on top” of it) */}
+      {/* ROW 1: Ticket Info & Breakdown */}
       <Row className="align-items-stretch mb-4">
-        {/* LEFT: Ticket Info + Breakdown (fills height) */}
         <Col md={9}>
           <div
             className="d-grid"
@@ -142,15 +170,20 @@ const TicketScreen = () => {
               gap: "1rem",
             }}
           >
-            {/* Ticket Info Card */}
             <Card>
               <Card.Header as="h5">Ticket Info</Card.Header>
               <Card.Body>
                 <Row>
                   <Col md={6}>
-                    <p><strong>Ticket #:</strong> {ticketNumber}</p>
-                    <p><strong>Status:</strong> {status || "Pending"}</p>
-                    <p><strong>Complaint:</strong> {complaint}</p>
+                    <p>
+                      <strong>Ticket #:</strong> {ticketNumber}
+                    </p>
+                    <p>
+                      <strong>Status:</strong> {status || "Pending"}
+                    </p>
+                    <p>
+                      <strong>Complaint:</strong> {complaint}
+                    </p>
                     <p>
                       <strong>Location:</strong>{" "}
                       {city ? `${city}, ${state}` : currentLocation}
@@ -161,17 +194,26 @@ const TicketScreen = () => {
                     </p>
                   </Col>
                   <Col md={6}>
-                    <p><strong>Company:</strong> {company?.name || "N/A"}</p>
-                    <p><strong>Driver Name:</strong> {user?.name || "N/A"}</p>
-                    <p><strong>Vendor Name:</strong> Default Vendor</p>
-                    <p><strong>Vendor Phone #:</strong> 555-555-5555</p>
-                    <p><strong>Vendor Email:</strong> vendor@example.com</p>
+                    <p>
+                      <strong>Company:</strong> {company?.name || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Driver Name:</strong> {user?.name || "N/A"}
+                    </p>
+                    <p>
+                      <strong>Vendor Name:</strong> Default Vendor
+                    </p>
+                    <p>
+                      <strong>Vendor Phone #:</strong> 555-555-5555
+                    </p>
+                    <p>
+                      <strong>Vendor Email:</strong> vendor@example.com
+                    </p>
                   </Col>
                 </Row>
               </Card.Body>
             </Card>
 
-            {/* Breakdown Description Card (stretch to fill) */}
             <Card className="h-100">
               <Card.Header as="h5">Breakdown Description</Card.Header>
               <Card.Body>
@@ -184,7 +226,7 @@ const TicketScreen = () => {
           </div>
         </Col>
 
-        {/* RIGHT: Attachments & Unit Details (stacked) */}
+        {/* ROW 1: RIGHT - Attachments & Unit Details */}
         <Col md={3}>
           <Card className="mb-3">
             <Card.Header as="h5">Attachments</Card.Header>
@@ -208,26 +250,41 @@ const TicketScreen = () => {
               )}
             </Card.Body>
           </Card>
-
           <Card>
             <Card.Header as="h5">Unit Details</Card.Header>
             <Card.Body>
-              <p><strong>Unit Type:</strong> {unitAffected}</p>
-              <p><strong>Make:</strong> Default</p>
-              <p><strong>Model:</strong> Default</p>
-              <p><strong>Tractor #:</strong> {truckNumber}</p>
-              <p><strong>Trailer #:</strong> {trailerNumber}</p>
-              <p><strong>VIN Last 8:</strong> {vinLast8}</p>
-              <p><strong>Mileage:</strong> {mileage}</p>
-              <p><strong>Load Status:</strong> {loadStatus}</p>
+              <p>
+                <strong>Unit Type:</strong> {unitAffected}
+              </p>
+              <p>
+                <strong>Make:</strong> Default
+              </p>
+              <p>
+                <strong>Model:</strong> Default
+              </p>
+              <p>
+                <strong>Tractor #:</strong> {truckNumber}
+              </p>
+              <p>
+                <strong>Trailer #:</strong> {trailerNumber}
+              </p>
+              <p>
+                <strong>VIN Last 8:</strong> {vinLast8}
+              </p>
+              <p>
+                <strong>Mileage:</strong> {mileage}
+              </p>
+              <p>
+                <strong>Load Status:</strong> {loadStatus}
+              </p>
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
-      {/* ROW 2: Chat + Driver Info */}
+      {/* ROW 2: Chat & Driver Info */}
       <Row>
-        {/* LEFT: Chat */}
+        {/* LEFT: Chat Section */}
         <Col md={9}>
           <Card className="mb-3">
             <Card.Header as="h5">Chat</Card.Header>
@@ -235,54 +292,84 @@ const TicketScreen = () => {
               {chatLoading ? (
                 <p>Loading chats...</p>
               ) : (
-                <div
-                  style={{
-                    maxHeight: "300px",
-                    overflowY: "auto",
-                    marginBottom: "1rem",
-                    border: "1px solid #ddd",
-                    padding: "0.5rem",
-                    borderRadius: "4px",
-                  }}
-                >
+                <div className="chat-container" ref={chatContainerRef}>
                   {chats.length === 0 ? (
                     <p>No chat messages yet.</p>
                   ) : (
-                    chats.map((chat) => (
-                      <div
-                        key={chat._id}
-                        style={{
-                          marginBottom: "0.5rem",
-                          borderBottom: "1px solid #ccc",
-                          paddingBottom: "0.5rem",
-                        }}
-                      >
-                        <p style={{ margin: 0 }}>
-                          <strong>{chat.sender?.name || "System"}</strong>:{" "}
-                          {chat.message}
-                        </p>
-                        <small>
-                          {new Date(chat.createdAt).toLocaleString()}
-                        </small>
-                      </div>
-                    ))
+                    chats.map((chat) => {
+                      const isCurrentUser =
+                        chat.sender && chat.sender._id === currentUserId;
+                      return (
+                        <div
+                          key={chat._id}
+                          className={`chat-bubble ${
+                            isCurrentUser ? "sender" : "receiver"
+                          }`}
+                        >
+                          <p style={{ margin: 0 }}>
+                            <strong>{chat.sender?.name || "System"}</strong>:{" "}
+                            {chat.message}
+                          </p>
+                          <small className="chat-timestamp">
+                            {new Date(chat.createdAt).toLocaleString()}
+                          </small>
+                        </div>
+                      );
+                    })
                   )}
                 </div>
               )}
 
-              <Form onSubmit={handleSendChat}>
-                <Form.Group controlId="chatMessage">
+              {/* Chat Input Section with Emoji Picker and Up Arrow */}
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  marginBottom: "0.5rem",
+                  position: "relative",
+                }}
+              >
+                <Button
+                  variant="link"
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  style={{ fontSize: "1.5rem", marginRight: "0.5rem" }}
+                >
+                  😀
+                </Button>
+                <InputGroup style={{ flexGrow: 1 }}>
                   <Form.Control
                     type="text"
                     placeholder="Type your message..."
                     value={chatMessage}
                     onChange={(e) => setChatMessage(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && chatMessage.trim() !== "") {
+                        e.preventDefault(); // prevent a newline if needed
+                        handleSendChat(e);
+                      }
+                    }}
                   />
-                </Form.Group>
-                <Button variant="primary" type="submit" className="mt-2">
-                  Send
-                </Button>
-              </Form>
+                  {chatMessage.trim() !== "" && (
+                    <Button
+                      variant="dark"
+                      type="submit"
+                      onClick={handleSendChat}
+                      style={{ marginLeft: "5px" }}
+                    >
+                      ↑
+                    </Button>
+                  )}
+                </InputGroup>
+              </div>
+
+              {/* Emoji Picker */}
+              {showEmojiPicker && (
+                <div
+                  style={{ position: "absolute", bottom: "150px", zIndex: 10 }}
+                >
+                  <EmojiPicker onEmojiClick={handleEmojiClick} />
+                </div>
+              )}
             </Card.Body>
           </Card>
         </Col>
@@ -292,10 +379,18 @@ const TicketScreen = () => {
           <Card>
             <Card.Header as="h5">Driver Info</Card.Header>
             <Card.Body>
-              <p><strong>Name:</strong> {user?.name || "N/A"}</p>
-              <p><strong>Phone:</strong> {user?.phone || "N/A"}</p>
-              <p><strong>Email:</strong> {user?.email || "N/A"}</p>
-              <p><strong>Company:</strong> {company?.name || "N/A"}</p>
+              <p>
+                <strong>Name:</strong> {user?.name || "N/A"}
+              </p>
+              <p>
+                <strong>Phone:</strong> {user?.phone || "N/A"}
+              </p>
+              <p>
+                <strong>Email:</strong> {user?.email || "N/A"}
+              </p>
+              <p>
+                <strong>Company:</strong> {company?.name || "N/A"}
+              </p>
             </Card.Body>
           </Card>
         </Col>

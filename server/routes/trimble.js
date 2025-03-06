@@ -18,8 +18,9 @@ const escapeXML = (str) => {
 
 router.get("/repair-orders", async (req, res) => {
   try {
-    const startDate = "2024-03-01"; // Fetch all records since March 1
-
+    const startDate = "2024-03-01";  // Start from March 1
+    const endDate = "2024-03-07";    // Fetch only one week
+    
     const soapRequest = `
     <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ams="http://tmwsystems.com/AMS">
         <soapenv:Header>
@@ -30,13 +31,12 @@ router.get("/repair-orders", async (req, res) => {
             <ams:GetOrderDetailsParamMessage>
                 <ams:Param>
                     <ams:OrderType>6</ams:OrderType>
-                    <ams:StartDate>${startDate}</ams:StartDate>  <!-- ✅ Fetch all since March 1 -->
+                    <ams:StartDate>${startDate}</ams:StartDate>  
+                    <ams:EndDate>${endDate}</ams:EndDate>  <!-- ✅ Restrict to one week -->
                 </ams:Param>
             </ams:GetOrderDetailsParamMessage>
         </soapenv:Body>
     </soapenv:Envelope>`;
-    
-
     // Log full SOAP request to debug issues
     console.log("Sending SOAP request:\n", soapRequest);
 

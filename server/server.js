@@ -1,4 +1,3 @@
-// server/server.js
 require('dotenv').config();
 const express = require('express');
 const connectDB = require('./config/db');
@@ -27,6 +26,9 @@ app.use('/api/chats', chatRoutes);
 const adminRoutes = require('./routes/admin');
 app.use('/api/admin', adminRoutes);
 
+// Trimble Route
+const trimbleRoutes = require('./routes/trimble');
+app.use('/api/trimble', trimbleRoutes);
 
 app.get('/', (req, res) => {
   res.send('TNTX Connect Backend is running!');

@@ -18,6 +18,8 @@ const escapeXML = (str) => {
 
 router.get("/repair-orders", async (req, res) => {
   try {
+    const startDate = "2024-03-01"; // Fetch all records since March 1
+
     const soapRequest = `
     <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ams="http://tmwsystems.com/AMS">
         <soapenv:Header>
@@ -28,8 +30,7 @@ router.get("/repair-orders", async (req, res) => {
             <ams:GetOrderDetailsParamMessage>
                 <ams:Param>
                     <ams:OrderType>6</ams:OrderType>
-                    <ams:CustID>218</ams:CustID>  <!-- ✅ Set to CustID 218 -->
-                    <ams:limit>10</ams:limit> <!-- ✅ Limit results to 10 -->
+                    <ams:StartDate>${startDate}</ams:StartDate>  <!-- ✅ Fetch all since March 1 -->
                 </ams:Param>
             </ams:GetOrderDetailsParamMessage>
         </soapenv:Body>

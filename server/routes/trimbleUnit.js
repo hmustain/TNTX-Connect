@@ -40,10 +40,10 @@ async function fetchUnitDetails(parameters = {}) {
     });
 
     // Log the raw XML response for inspection
-    console.log("Raw SOAP response:", response.data);
+    // console.log("Raw SOAP response:", response.data);
 
     const jsonResponse = await parseSOAPResponse(response.data);
-    console.log("Parsed JSON response:", JSON.stringify(jsonResponse, null, 2));
+    // console.log("Parsed JSON response:", JSON.stringify(jsonResponse, null, 2));
 
     // Extraction: we include the "Result" node in the path.
     const unitDetailsRaw = jsonResponse["s:Envelope"]?.["s:Body"]?.["UnitDetailsListResMessage"]?.["Result"]?.["UnitList"]?.["UnitDetails"];

@@ -50,24 +50,6 @@ fs.readFile(customerDataPath, "utf8", (err, data) => {
   }
 });
 
-// NEW Endpoint: Test Unit Details for a single unit (UnitNumber: "13804")
-router.get("/unit-details", async (req, res) => {
-  try {
-    const parameters = { UnitNumber: "13804", Status: "ACTIVE" };
-    const units = await fetchUnitDetails(parameters);
-    console.log("Fetched unit details:", JSON.stringify(units, null, 2));
-    
-    // If units is not an array, wrap it in one.
-    const unitsArray = Array.isArray(units) ? units : (units ? [units] : []);
-    // Return the first unit if available.
-    const unitData = unitsArray.length ? unitsArray[0] : {};
-    res.json(unitData);
-  } catch (error) {
-    console.error("Error fetching unit details:", error.message);
-    res.status(500).json({ error: "Failed to fetch unit details" });
-  }
-});
-
 // Existing Endpoint: Repair Orders with merged unit details
 router.get("/repair-orders", async (req, res) => {
     try {
@@ -88,9 +70,9 @@ router.get("/repair-orders", async (req, res) => {
             </soapenv:Body>
         </soapenv:Envelope>`;
   
-      if (process.env.NODE_ENV === "development") {
-        console.log(`Sending SOAP request for repair orders. Request length: ${soapRequest.length}`);
-      }
+    //   if (process.env.NODE_ENV === "development") {
+    //     console.log(`Sending SOAP request for repair orders. Request length: ${soapRequest.length}`);
+    //   }
   
       const response = await axios.post(
         process.env.TRIMBLE_API_URL,
@@ -133,14 +115,17 @@ router.get("/repair-orders", async (req, res) => {
   
       // Map each repair order and merge additional unit details.
       let mappedOrders = filteredOrders.map(order => {
+        // Use the CustomerNumber field as the customer key.
+        const customerKey = order.CustomerNumber ? order.CustomerNumber.trim() : "";
+        
         // Lookup vendor details
         const vendorDetails = vendorMap[order.Vendor] || { name: "Unknown Vendor", phone: "N/A", city: "N/A", state: "N/A" };
   
-        // Lookup customer details based on CustomerNumber field
-        const customerKey = order.CustomerNumber ? order.CustomerNumber.trim() : "";
+        // Lookup customer details based on customerKey
         let customerDetails = customerMap[customerKey];
         if (!customerDetails) {
-          console.log(`No customer match found for key: "${customerKey}"`);
+          // Commented out to prevent excessive logging:
+          // console.log(`No customer match found for key: "${customerKey}"`);
           customerDetails = {
             NAME: "Unknown",
             ADDRESS1: "N/A",
@@ -180,8 +165,9 @@ router.get("/repair-orders", async (req, res) => {
               NameCustomer: additionalUnit.NameCustomer || ""
             }
           },
-          // Attach customer details with cleanup
+          // Attach customer details with cleanup and preserve the original key.
           customer: {
+            key: customerKey,
             NAME: cleanString(customerDetails.NAME),
             ADDRESS1: cleanString(customerDetails.ADDRESS1),
             CITY: cleanString(customerDetails.CITY),
@@ -200,6 +186,21 @@ router.get("/repair-orders", async (req, res) => {
         mappedOrders = mappedOrders.filter(order => new Date(order.openedDate) >= fromDate);
       }
   
+      // Filter to only include orders from allowed customers based on the customer key.
+      const allowedCustomerKeys = [
+        "MELTON",
+        "104376",
+        "ROYAL",
+        "HODGES",
+        "SMT",
+        "CCT",
+        "BIGM",
+        "WATKINS",
+        "WILSON",
+        "MC EXPRESS"
+      ];
+      mappedOrders = mappedOrders.filter(order => allowedCustomerKeys.includes(order.customer.key));
+  
       res.json(mappedOrders);
     } catch (error) {
       console.error("Error fetching repair orders:", error.message);
@@ -207,5 +208,4 @@ router.get("/repair-orders", async (req, res) => {
     }
   });
   
-
 module.exports = router;

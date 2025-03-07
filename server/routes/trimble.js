@@ -18,10 +18,6 @@ const escapeXML = (str) => {
 
 router.get("/repair-orders", async (req, res) => {
   try {
-    const startDate = "2024-03-01"; // Start date: March 1
-    const endDate = "2024-03-07";   // End date: March 7 (one week)
-    const custId = "218";  // BigM's customer number
-
     const soapRequest = `
     <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ams="http://tmwsystems.com/AMS">
         <soapenv:Header>
@@ -32,15 +28,12 @@ router.get("/repair-orders", async (req, res) => {
             <ams:GetOrderDetailsParamMessage>
                 <ams:Param>
                     <ams:OrderType>6</ams:OrderType>
-                    <ams:CustID>${custId}</ams:CustID>  <!-- ✅ Filter for BigM -->
-                    <ams:StartDate>${startDate}</ams:StartDate>
-                    <ams:EndDate>${endDate}</ams:EndDate>
+                    <ams:Status>OPEN</ams:Status>  <!-- ✅ Only fetch OPEN orders -->
                 </ams:Param>
             </ams:GetOrderDetailsParamMessage>
         </soapenv:Body>
     </soapenv:Envelope>`;
     
-    // Log full SOAP request to debug issues
     console.log("Sending SOAP request:\n", soapRequest);
 
     const response = await axios.post(
@@ -57,9 +50,25 @@ router.get("/repair-orders", async (req, res) => {
 
     // Convert XML to JSON
     const parser = new xml2js.Parser({ explicitArray: false });
-    const jsonResponse = await parser.parseStringPromise(response.data);
+    let jsonResponse = await parser.parseStringPromise(response.data);
 
-    res.json(jsonResponse);
+    // Extract only required fields
+    let filteredOrders = jsonResponse["s:Envelope"]?.["s:Body"]?.["OrderListingResMessage"]?.["Result"]?.["Orders"]?.["OrderParam"] || [];
+
+    filteredOrders = filteredOrders.map(order => ({
+        orderNumber: order.OrderNum,
+        status: order.Status,
+        openedDate: order.Opened,
+        closedDate: order.Closed || null,
+        vendor: order.Vendor,
+        unitNumber: order.UnitNumber,
+        customerID: order.CustID,
+        customerName: order.CustomerNumber,
+        componentCode: order.Sections?.OrderSectionRes?.CompCode || "",
+        componentDescription: order.Sections?.OrderSectionRes?.CompDesc || ""
+    }));
+
+    res.json(filteredOrders);
   } catch (error) {
     console.error("Error fetching repair orders:", error.message);
     res.status(500).json({ error: "Failed to fetch repair orders" });

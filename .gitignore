@@ -130,5 +130,5 @@ dist
 .pnp.*
 
 # vendor json file
-server/data/vendor.json
+server/data/vendors.json
 

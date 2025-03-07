@@ -1,20 +1,32 @@
 const express = require("express");
 const axios = require("axios");
 const xml2js = require("xml2js");
+const fs = require("fs");
+const path = require("path");
 require("dotenv").config();
 
 const router = express.Router();
 
-// Function to escape XML special characters
-const escapeXML = (str) => {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;")
-    .replace(/!/g, "&#33;");
-};
+// Load vendor data into memory when the server starts
+const vendorDataPath = path.join(__dirname, "../data/vendors.json");
+let vendorMap = {};
+
+fs.readFile(vendorDataPath, "utf8", (err, data) => {
+  if (err) {
+    console.error("Error loading vendor data:", err);
+  } else {
+    try {
+      const vendors = JSON.parse(data);
+      if (typeof vendors !== "object") {
+        throw new Error("Vendors data is not an object! Check the JSON format.");
+      }
+      vendorMap = vendors; // ✅ Directly store the object
+      console.log("✅ Vendor data loaded successfully.");
+    } catch (parseError) {
+      console.error("Error parsing vendor JSON:", parseError);
+    }
+  }
+});
 
 router.get("/repair-orders", async (req, res) => {
   try {
@@ -33,7 +45,7 @@ router.get("/repair-orders", async (req, res) => {
             </ams:GetOrderDetailsParamMessage>
         </soapenv:Body>
     </soapenv:Envelope>`;
-    
+
     console.log("Sending SOAP request:\n", soapRequest);
 
     const response = await axios.post(
@@ -55,18 +67,29 @@ router.get("/repair-orders", async (req, res) => {
     // Extract only required fields
     let filteredOrders = jsonResponse["s:Envelope"]?.["s:Body"]?.["OrderListingResMessage"]?.["Result"]?.["Orders"]?.["OrderParam"] || [];
 
-    filteredOrders = filteredOrders.map(order => ({
-        orderNumber: order.OrderNum,
-        status: order.Status,
-        openedDate: order.Opened,
-        closedDate: order.Closed || null,
-        vendor: order.Vendor,
-        unitNumber: order.UnitNumber,
-        customerID: order.CustID,
-        customerName: order.CustomerNumber,
-        componentCode: order.Sections?.OrderSectionRes?.CompCode || "",
-        componentDescription: order.Sections?.OrderSectionRes?.CompDesc || ""
-    }));
+    filteredOrders = filteredOrders.map(order => {
+        // Lookup vendor details using the vendor code
+        const vendorDetails = vendorMap[order.Vendor] || { name: "Unknown Vendor", phone: "N/A", city: "N/A", state: "N/A" };
+
+        return {
+            orderNumber: order.OrderNum,
+            status: order.Status,
+            openedDate: order.Opened,
+            closedDate: order.Closed || null,
+            vendor: {
+                code: order.Vendor,
+                name: vendorDetails.name,
+                phone: vendorDetails.phone,
+                city: vendorDetails.city,
+                state: vendorDetails.state
+            },
+            unitNumber: order.UnitNumber,
+            customerID: order.CustID,
+            customerName: order.CustomerNumber,
+            componentCode: order.Sections?.OrderSectionRes?.CompCode || "",
+            componentDescription: order.Sections?.OrderSectionRes?.CompDesc || ""
+        };
+    });
 
     res.json(filteredOrders);
   } catch (error) {

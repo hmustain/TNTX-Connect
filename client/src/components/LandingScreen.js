@@ -1,5 +1,6 @@
+// LandingScreen.js
 import React, { useState } from "react";
-import useTickets from "../hooks/useTickets";
+import useRepairOrders from "../hooks/useRepairOrders";
 import useCurrentUser from "../hooks/useCurrentUser";
 import { Container, Row, Col, Button, Table } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
@@ -18,8 +19,8 @@ const UnitIcon = ({ unitType, size = 48, color = "#000" }) => {
   }
 };
 
-const renderElapsedTimeExtended = (createdAt) => {
-  const totalMinutes = differenceInMinutes(new Date(), new Date(createdAt));
+const renderElapsedTimeExtended = (openedDate) => {
+  const totalMinutes = differenceInMinutes(new Date(), new Date(openedDate));
   const days = Math.floor(totalMinutes / (60 * 24));
   const remainderMinutes = totalMinutes % (60 * 24);
   const hours = Math.floor(remainderMinutes / 60);
@@ -29,43 +30,39 @@ const renderElapsedTimeExtended = (createdAt) => {
       .toString()
       .padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
   }
-  return `${hours.toString().padStart(2, "0")}:${minutes
-    .toString()
-    .padStart(2, "0")}`;
+  return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
 };
 
 const LandingScreen = () => {
   const { user, loading: userLoading } = useCurrentUser();
   const isAuthenticated = Boolean(user);
-  const { tickets, loading: ticketsLoading } = useTickets(user);
+  const { orders, loading: ordersLoading, error } = useRepairOrders();
   const navigate = useNavigate();
 
-  // State to toggle between active and historical views
+  // Toggle between active and historical views
   const [ticketView, setTicketView] = useState("active"); // "active" or "historical"
 
-  // State for additional filter criteria & modal visibility
+  // Manage filter modal state and filter criteria
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filter, setFilter] = useState({
     status: "",
     unitType: "",
-    // You can add more fields if needed
   });
 
-  // First apply additional filters from FilterModal (if any)
-  const filteredByModal = tickets.filter((ticket) => {
-    if (filter.status && ticket.status !== filter.status) return false;
-    if (filter.unitType && ticket.unitAffected !== filter.unitType)
+  // Filter orders using the criteria from the filter modal
+  const filteredOrders = orders.filter(order => {
+    if (filter.status && order.status !== filter.status) return false;
+    if (filter.unitType && order.unitNumber?.details?.UnitType !== filter.unitType)
       return false;
     return true;
   });
 
-  // Then filter based on ticketView: active tickets are those that are not "closed"
-  // and historical tickets are those that are "closed"
-  const displayedTickets = filteredByModal.filter((ticket) => {
+  // Further filter orders based on active vs. historical view
+  const displayedOrders = filteredOrders.filter(order => {
     if (ticketView === "active") {
-      return ticket.status !== "Closed";
+      return order.status !== "Closed";
     } else {
-      return ticket.status === "Closed";
+      return order.status === "Closed";
     }
   });
 
@@ -75,7 +72,7 @@ const LandingScreen = () => {
         <div className="text-center">Loading user data...</div>
       ) : isAuthenticated ? (
         <>
-          {/* CTA Buttons Row (left-justified) */}
+          {/* Action Buttons */}
           <Row className="mb-3 text-start">
             <Col>
               <Button
@@ -126,7 +123,7 @@ const LandingScreen = () => {
             setFilter={setFilter}
           />
 
-          {/* Centered Table Container */}
+          {/* Table displaying the Trimble data */}
           <div
             style={{
               display: "flex",
@@ -138,62 +135,66 @@ const LandingScreen = () => {
             <Table striped bordered hover responsive className="text-center">
               <thead className="table-dark">
                 <tr style={{ verticalAlign: "middle" }}>
-                  <th>Ticket #</th>
+                  <th>Auth #</th>
                   <th>Unit Type</th>
                   <th>Company</th>
-                  <th>Tractor #</th>
-                  <th>Trailer #</th>
+                  <th>Unit #</th>
                   <th>Complaint</th>
                   <th>Location</th>
                   <th>Driver Name</th>
-                  <th>Auth #</th>
                   <th>Date</th>
                   <th>Time Elapsed</th>
                   <th>Status</th>
                 </tr>
               </thead>
               <tbody>
-                {ticketsLoading ? (
+                {ordersLoading ? (
                   <tr style={{ verticalAlign: "middle" }}>
-                    <td colSpan="12" className="text-center">
+                    <td colSpan="10" className="text-center">
                       Loading...
                     </td>
                   </tr>
-                ) : displayedTickets.length === 0 ? (
+                ) : displayedOrders.length === 0 ? (
                   <tr style={{ verticalAlign: "middle" }}>
-                    <td colSpan="12" className="text-center">
-                      No {ticketView} tickets available.
+                    <td colSpan="10" className="text-center">
+                      No {ticketView} orders available.
                     </td>
                   </tr>
                 ) : (
-                  displayedTickets.map((ticket) => (
+                  displayedOrders.map((order) => (
                     <tr
-                      key={ticket._id}
+                      key={order.orderNumber}
                       style={{ verticalAlign: "middle", cursor: "pointer" }}
-                      onClick={() => navigate(`/ticket/${ticket._id}`)}
+                      onClick={() => navigate(`/ticket/${order.orderNumber}`)}
                     >
-                      <td>{ticket.ticketNumber}</td>
+                      <td>{order.orderNumber}</td>
                       <td>
                         <UnitIcon
-                          unitType={ticket.unitAffected}
+                          unitType={order.unitNumber?.details?.UnitType}
                           size={48}
                           color="#000"
                         />
                       </td>
+                      <td>{order.customer?.NAME || "None"}</td>
+                      <td>{order.unitNumber?.value}</td>
+                      <td>{order.componentDescription}</td>
                       <td>
-                        {ticket.company && ticket.company.name
-                          ? ticket.company.name
-                          : "None"}
+                        <input
+                          type="text"
+                          placeholder="Enter Location"
+                          defaultValue={order.location || ""}
+                        />
                       </td>
-                      <td>{ticket.truckNumber}</td>
-                      <td>{ticket.trailerNumber}</td>
-                      <td>{ticket.complaint}</td>
-                      <td>{ticket.city + "," + ticket.state}</td>
-                      <td>{ticket.user && ticket.user.name}</td>
-                      <td>{"AUTH-1234"}</td>
-                      <td>{new Date(ticket.createdAt).toLocaleDateString()}</td>
-                      <td>{renderElapsedTimeExtended(ticket.createdAt)}</td>
-                      <td>{ticket.status || "open"}</td>
+                      <td>
+                        <input
+                          type="text"
+                          placeholder="Enter Driver Name"
+                          defaultValue={order.driverName || ""}
+                        />
+                      </td>
+                      <td>{new Date(order.openedDate).toLocaleDateString()}</td>
+                      <td>{renderElapsedTimeExtended(order.openedDate)}</td>
+                      <td>{order.status}</td>
                     </tr>
                   ))
                 )}
@@ -202,11 +203,11 @@ const LandingScreen = () => {
           </div>
         </>
       ) : (
-        // Minimal logged-out view with welcome message and CTA
+        // Logged out view
         <div className="text-center py-5">
           <h4>Welcome to TNTX Connect</h4>
           <p>We handle all of your breakdown solutions.</p>
-          <p>Please login or register an account to see tickets.</p>
+          <p>Please login or register an account to see orders.</p>
           <Button
             variant="dark"
             className="mt-3"

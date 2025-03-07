@@ -132,3 +132,6 @@ dist
 # vendor json file
 server/data/vendors.json
 
+# customer json file
+server/data/customers.json
+

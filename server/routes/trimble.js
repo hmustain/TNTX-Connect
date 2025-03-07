@@ -88,7 +88,9 @@ router.get("/repair-orders", async (req, res) => {
           </soapenv:Body>
       </soapenv:Envelope>`;
 
-    console.log("Sending SOAP request for repair orders:\n", soapRequest);
+      if (process.env.NODE_ENV === "development") {
+        console.log(`Sending SOAP request for repair orders. Request length: ${soapRequest.length}`);
+      }
 
     const response = await axios.post(
       process.env.TRIMBLE_API_URL,

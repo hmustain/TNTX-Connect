@@ -9,10 +9,8 @@ const useRepairOrders = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await fetch('/api/trimble/repair-orders', {
-          headers: {
-            'Content-Type': 'application/json'
-          }
+        const response = await fetch('/api/trimble/repair-orders?fromDate=2025-03-01', {
+          headers: { 'Content-Type': 'application/json' }
         });
         if (!response.ok) {
           throw new Error('Failed to fetch repair orders');

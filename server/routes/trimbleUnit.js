@@ -3,26 +3,12 @@ const axios = require("axios");
 const xml2js = require("xml2js");
 require("dotenv").config();
 
-/**
- * Helper function to parse SOAP XML responses into JSON.
- * This function uses xml2js with the option to not wrap single items in arrays.
- */
 async function parseSOAPResponse(soapResponse) {
   const parser = new xml2js.Parser({ explicitArray: false });
   return parser.parseStringPromise(soapResponse);
 }
 
-/**
- * Fetches unit details from the Trimble API.
- * You can pass parameters (like UnitID, UnitNumber, CustomerName, etc.) as needed.
- *
- * The SOAP envelope is constructed to match the WSDL for the GetUnitDetails operation.
- *
- * @param {Object} parameters - An object containing optional parameters.
- * @returns {Promise<Object[]>} - A promise that resolves to the unit details.
- */
 async function fetchUnitDetails(parameters = {}) {
-  // Construct the SOAP envelope using the provided parameters.
   const soapRequest = `
     <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ams="http://tmwsystems.com/AMS">
       <soapenv:Header>
@@ -53,11 +39,32 @@ async function fetchUnitDetails(parameters = {}) {
       }
     });
 
+    // Log the raw XML response for inspection
+    console.log("Raw SOAP response:", response.data);
+
     const jsonResponse = await parseSOAPResponse(response.data);
-    // Navigate the JSON response to extract the unit details.
-    // Adjust the following path if your actual response structure is different.
-    const unitDetails = jsonResponse["s:Envelope"]?.["s:Body"]?.["UnitDetailsListResMessage"]?.["UnitList"]?.["UnitDetails"];
-    return unitDetails;
+    console.log("Parsed JSON response:", JSON.stringify(jsonResponse, null, 2));
+
+    // Extraction: we include the "Result" node in the path.
+    const unitDetailsRaw = jsonResponse["s:Envelope"]?.["s:Body"]?.["UnitDetailsListResMessage"]?.["Result"]?.["UnitList"]?.["UnitDetails"];
+    if (!unitDetailsRaw) return null;
+
+    // Transform the unit details to include only the desired fields.
+    const transformUnit = (unit) => ({
+      UnitNumber: unit.UnitNumber || "",
+      UnitType: unit.UnitType || "",
+      Make: unit.Make || "",
+      Model: unit.Model || "",
+      ModelYear: unit.ModelYear || "",
+      SerialNo: unit.SerialNo || "",
+      NameCustomer: unit.NameCustomer || ""
+    });
+
+    if (Array.isArray(unitDetailsRaw)) {
+      return unitDetailsRaw.map(transformUnit);
+    } else {
+      return transformUnit(unitDetailsRaw);
+    }
   } catch (error) {
     console.error("Error fetching unit details:", error.message);
     throw error;
@@ -65,3 +72,15 @@ async function fetchUnitDetails(parameters = {}) {
 }
 
 module.exports = { fetchUnitDetails };
+
+// Test block: If run directly, fetch details for unit number "13804"
+if (require.main === module) {
+  (async () => {
+    try {
+      const result = await fetchUnitDetails({ UnitNumber: "13804", Status: "ACTIVE" });
+      console.log("Test fetch result:", JSON.stringify(result, null, 2));
+    } catch (err) {
+      console.error("Test fetch error:", err);
+    }
+  })();
+}

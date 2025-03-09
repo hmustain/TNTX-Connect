@@ -50,7 +50,7 @@ const LandingScreen = () => {
   });
 
   // Filter orders using the criteria from the filter modal
-  const filteredOrders = orders.filter(order => {
+  const filteredOrders = orders.filter((order) => {
     if (filter.status && order.status !== filter.status) return false;
     if (filter.unitType && order.unitNumber?.details?.UnitType !== filter.unitType)
       return false;
@@ -58,7 +58,7 @@ const LandingScreen = () => {
   });
 
   // Further filter orders based on active vs. historical view
-  const displayedOrders = filteredOrders.filter(order => {
+  const displayedOrders = filteredOrders.filter((order) => {
     if (ticketView === "active") {
       return order.status !== "Closed";
     } else {
@@ -135,7 +135,7 @@ const LandingScreen = () => {
             <Table striped bordered hover responsive className="text-center">
               <thead className="table-dark">
                 <tr style={{ verticalAlign: "middle" }}>
-                  <th>Auth #</th>
+                  <th>RO #</th>
                   <th>Unit Type</th>
                   <th>Company</th>
                   <th>Unit #</th>
@@ -163,11 +163,20 @@ const LandingScreen = () => {
                 ) : (
                   displayedOrders.map((order) => (
                     <tr
-                      key={order.orderNumber}
+                      key={order.orderId}
                       style={{ verticalAlign: "middle", cursor: "pointer" }}
-                      onClick={() => navigate(`/ticket/${order.orderNumber}`)}
+                      onClick={() => navigate(`/ticket/${order.orderId}`)}
                     >
-                      <td>{order.orderNumber}</td>
+                      <td>
+                        <a
+                          href={`https://ttx.tmwcloud.com/AMSApp/Orders/RepairCreate.aspx?OrderId=${order.orderId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {order.orderNumber}
+                        </a>
+                      </td>
                       <td>
                         <UnitIcon
                           unitType={order.unitNumber?.details?.UnitType}

@@ -1,3 +1,4 @@
+// src/components/TicketScreen.js
 import React, { useState, useEffect, useContext, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
@@ -14,7 +15,7 @@ import AuthContext from "../context/AuthContext";
 import "../ChatScreen.css";
 
 const TicketScreen = () => {
-  const { id } = useParams();
+  const { id } = useParams(); // id represents the Trimble OrderID
   const navigate = useNavigate();
   const { authData } = useContext(AuthContext);
   const currentUserId = authData?.user?._id;
@@ -32,7 +33,8 @@ const TicketScreen = () => {
   useEffect(() => {
     const fetchTicket = async () => {
       try {
-        const res = await fetch(`/api/tickets/${id}`, {
+        // Now fetching from the Trimble endpoint for repair orders by OrderID
+        const res = await fetch(`/api/trimble/repair-orders/${id}`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -40,9 +42,7 @@ const TicketScreen = () => {
         });
         if (!res.ok) throw new Error("Unauthorized or Ticket not found");
         const data = await res.json();
-        if (data.success) {
-          setTicket(data.data);
-        }
+        setTicket(data);
       } catch (err) {
         console.error("Error fetching ticket:", err);
       } finally {
@@ -56,6 +56,7 @@ const TicketScreen = () => {
     const fetchChats = async () => {
       try {
         setChatLoading(true);
+        // You may want to update this endpoint if chats are tied to a repair order
         const res = await fetch(`/api/chats/ticket/${id}`, {
           headers: {
             "Content-Type": "application/json",
@@ -76,15 +77,13 @@ const TicketScreen = () => {
     fetchChats();
   }, [id, token]);
 
-  // Auto-scroll to the bottom when chats update
+  // Auto-scroll chat container to bottom when chats update
   useEffect(() => {
     if (chatContainerRef.current) {
-      chatContainerRef.current.scrollTop =
-        chatContainerRef.current.scrollHeight;
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [chats]);
 
-  // Updated callback: parameters are (emojiData, event)
   const handleEmojiClick = (emojiData, event) => {
     setChatMessage((prev) => prev + emojiData.emoji);
     setShowEmojiPicker(false);
@@ -93,7 +92,6 @@ const TicketScreen = () => {
   const handleSendChat = async (e) => {
     e.preventDefault();
     if (!chatMessage.trim()) return;
-
     try {
       const res = await fetch("/api/chats", {
         method: "POST",
@@ -130,24 +128,18 @@ const TicketScreen = () => {
     );
   }
 
-  // Destructure fields for easier usage
+  // Destructure the fields from the Trimble repair order
   const {
-    ticketNumber,
+    orderId,
+    orderNumber,
     status,
-    complaint,
-    currentLocation,
-    createdAt,
-    company,
-    user,
-    unitAffected,
-    truckNumber,
-    trailerNumber,
-    vinLast8,
-    mileage,
-    loadStatus,
-    breakdownDescription,
-    city,
-    state,
+    openedDate,
+    closedDate,
+    vendor,
+    unitNumber,
+    customer,
+    componentCode,
+    componentDescription,
   } = ticket;
 
   return (
@@ -157,9 +149,21 @@ const TicketScreen = () => {
         <Button variant="secondary" onClick={() => navigate("/")}>
           Back to Tickets
         </Button>
+        {/* Button to view the repair order in Trimble */}
+        <Button
+          variant="outline-primary"
+          onClick={() =>
+            window.open(
+              `https://ttx.tmwcloud.com/AMSApp/Orders/RepairCreate.aspx?OrderId=${orderId}`,
+              "_blank"
+            )
+          }
+        >
+          View in Trimble
+        </Button>
       </div>
 
-      {/* ROW 1: Ticket Info & Breakdown */}
+      {/* ROW 1: Ticket Info & Component Details */}
       <Row className="align-items-stretch mb-4">
         <Col md={9}>
           <div
@@ -176,38 +180,32 @@ const TicketScreen = () => {
                 <Row>
                   <Col md={6}>
                     <p>
-                      <strong>Ticket #:</strong> {ticketNumber}
+                      <strong>Repair Order #:</strong> {orderNumber}
                     </p>
                     <p>
                       <strong>Status:</strong> {status || "Pending"}
                     </p>
                     <p>
-                      <strong>Complaint:</strong> {complaint}
+                      <strong>Opened:</strong>{" "}
+                      {new Date(openedDate).toLocaleDateString()}
                     </p>
                     <p>
-                      <strong>Location:</strong>{" "}
-                      {city ? `${city}, ${state}` : currentLocation}
-                    </p>
-                    <p>
-                      <strong>Date Created:</strong>{" "}
-                      {new Date(createdAt).toLocaleDateString()}
+                      <strong>Closed:</strong>{" "}
+                      {closedDate !== "0001-01-01T00:00:00" ? new Date(closedDate).toLocaleDateString() : "N/A"}
                     </p>
                   </Col>
                   <Col md={6}>
                     <p>
-                      <strong>Company:</strong> {company?.name || "N/A"}
+                      <strong>Vendor:</strong> {vendor.name}
                     </p>
                     <p>
-                      <strong>Driver Name:</strong> {user?.name || "N/A"}
+                      <strong>Vendor Phone:</strong> {vendor.phone}
                     </p>
                     <p>
-                      <strong>Vendor Name:</strong> Default Vendor
+                      <strong>Vendor Location:</strong> {vendor.city}, {vendor.state}
                     </p>
                     <p>
-                      <strong>Vendor Phone #:</strong> 555-555-5555
-                    </p>
-                    <p>
-                      <strong>Vendor Email:</strong> vendor@example.com
+                      <strong>Customer:</strong> {customer.NAME}
                     </p>
                   </Col>
                 </Row>
@@ -215,67 +213,44 @@ const TicketScreen = () => {
             </Card>
 
             <Card className="h-100">
-              <Card.Header as="h5">Breakdown Description</Card.Header>
+              <Card.Header as="h5">Component Details</Card.Header>
               <Card.Body>
                 <p>
-                  <strong>Breakdown Description:</strong>{" "}
-                  {breakdownDescription || "No Description Provided"}
+                  <strong>Component Code:</strong> {componentCode || "N/A"}
+                </p>
+                <p>
+                  <strong>Component Description:</strong> {componentDescription || "N/A"}
                 </p>
               </Card.Body>
             </Card>
           </div>
         </Col>
 
-        {/* ROW 1: RIGHT - Attachments & Unit Details */}
+        {/* ROW 1: RIGHT - Unit Details */}
         <Col md={3}>
-          <Card className="mb-3">
-            <Card.Header as="h5">Attachments</Card.Header>
-            <Card.Body>
-              {ticket.attachments && ticket.attachments.length > 0 ? (
-                <ul>
-                  {ticket.attachments.map((file, idx) => (
-                    <li key={idx}>
-                      <a
-                        href={file.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        {file.filename}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p>No attachments available.</p>
-              )}
-            </Card.Body>
-          </Card>
           <Card>
             <Card.Header as="h5">Unit Details</Card.Header>
             <Card.Body>
               <p>
-                <strong>Unit Type:</strong> {unitAffected}
+                <strong>Unit Number:</strong> {unitNumber.value}
               </p>
               <p>
-                <strong>Make:</strong> Default
+                <strong>Unit Type:</strong> {unitNumber.details?.UnitType || "N/A"}
               </p>
               <p>
-                <strong>Model:</strong> Default
+                <strong>Make:</strong> {unitNumber.details?.Make || "N/A"}
               </p>
               <p>
-                <strong>Tractor #:</strong> {truckNumber}
+                <strong>Model:</strong> {unitNumber.details?.Model || "N/A"}
               </p>
               <p>
-                <strong>Trailer #:</strong> {trailerNumber}
+                <strong>Year:</strong> {unitNumber.details?.ModelYear || "N/A"}
               </p>
               <p>
-                <strong>VIN Last 8:</strong> {vinLast8}
+                <strong>Serial No:</strong> {unitNumber.details?.SerialNo || "N/A"}
               </p>
               <p>
-                <strong>Mileage:</strong> {mileage}
-              </p>
-              <p>
-                <strong>Load Status:</strong> {loadStatus}
+                <strong>Customer Name:</strong> {unitNumber.details?.NameCustomer || "N/A"}
               </p>
             </Card.Body>
           </Card>
@@ -302,13 +277,10 @@ const TicketScreen = () => {
                       return (
                         <div
                           key={chat._id}
-                          className={`chat-bubble ${
-                            isCurrentUser ? "sender" : "receiver"
-                          }`}
+                          className={`chat-bubble ${isCurrentUser ? "sender" : "receiver"}`}
                         >
                           <p style={{ margin: 0 }}>
-                            <strong>{chat.sender?.name || "System"}</strong>:{" "}
-                            {chat.message}
+                            <strong>{chat.sender?.name || "System"}</strong>: {chat.message}
                           </p>
                           <small className="chat-timestamp">
                             {new Date(chat.createdAt).toLocaleString()}
@@ -320,7 +292,6 @@ const TicketScreen = () => {
                 </div>
               )}
 
-              {/* Chat Input Section with Emoji Picker and Up Arrow */}
               <div
                 style={{
                   display: "flex",
@@ -344,7 +315,7 @@ const TicketScreen = () => {
                     onChange={(e) => setChatMessage(e.target.value)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" && chatMessage.trim() !== "") {
-                        e.preventDefault(); // prevent a newline if needed
+                        e.preventDefault();
                         handleSendChat(e);
                       }
                     }}
@@ -362,11 +333,8 @@ const TicketScreen = () => {
                 </InputGroup>
               </div>
 
-              {/* Emoji Picker */}
               {showEmojiPicker && (
-                <div
-                  style={{ position: "absolute", bottom: "150px", zIndex: 10 }}
-                >
+                <div style={{ position: "absolute", bottom: "150px", zIndex: 10 }}>
                   <EmojiPicker onEmojiClick={handleEmojiClick} />
                 </div>
               )}
@@ -379,18 +347,10 @@ const TicketScreen = () => {
           <Card>
             <Card.Header as="h5">Driver Info</Card.Header>
             <Card.Body>
-              <p>
-                <strong>Name:</strong> {user?.name || "N/A"}
-              </p>
-              <p>
-                <strong>Phone:</strong> {user?.phone || "N/A"}
-              </p>
-              <p>
-                <strong>Email:</strong> {user?.email || "N/A"}
-              </p>
-              <p>
-                <strong>Company:</strong> {company?.name || "N/A"}
-              </p>
+              <p><strong>Name:</strong> {customer.NAME}</p>
+              <p><strong>Phone:</strong> {customer.MAINPHONE}</p>
+              <p><strong>Email:</strong> N/A</p>
+              <p><strong>Company:</strong> {customer.NAME}</p>
             </Card.Body>
           </Card>
         </Col>

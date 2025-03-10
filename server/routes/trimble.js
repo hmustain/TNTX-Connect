@@ -119,7 +119,7 @@ async function getMappedOrders(query = {}) {
   });
 
   // Map each repair order and merge additional unit details.
-  // Also include the OrderID field.
+  // Also include the OrderID, RoadCallId, and RoadCallNum from RepOrder (if available)
   let mappedOrders = filteredOrders.map((order) => {
     const customerKey = order.CustomerNumber ? order.CustomerNumber.trim() : "";
 
@@ -181,6 +181,8 @@ async function getMappedOrders(query = {}) {
       },
       componentCode: order.Sections?.OrderSectionRes?.CompCode || "",
       componentDescription: order.Sections?.OrderSectionRes?.CompDesc || "",
+      roadCallId: order.RepOrder?.RoadCallId || null,
+      roadCallNum: order.RepOrder?.RoadCallNum || null,
     };
   });
 
@@ -225,7 +227,6 @@ router.get("/repair-orders/:orderId", async (req, res) => {
     const orderIdParam = req.params.orderId;
     const orders = await getMappedOrders();
     // Find the order where orderId matches the parameter.
-    // Note: orderId is a string (as returned by the SOAP response), so you may need to ensure types match.
     const order = orders.find((o) => o.orderId === orderIdParam);
     if (!order) {
       return res.status(404).json({ error: "Repair order not found" });

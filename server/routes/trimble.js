@@ -118,73 +118,98 @@ async function getMappedOrders(query = {}) {
     }
   });
 
-  // Map each repair order and merge additional unit details.
-  // Also include the OrderID, RoadCallId, and RoadCallNum from RepOrder (if available)
-  let mappedOrders = filteredOrders.map((order) => {
-    const customerKey = order.CustomerNumber ? order.CustomerNumber.trim() : "";
+// Map each repair order and merge additional unit details.
+let mappedOrders = filteredOrders.map((order) => {
+  const customerKey = order.CustomerNumber ? order.CustomerNumber.trim() : "";
 
-    const vendorDetails = vendorMap[order.Vendor] || {
-      name: "Unknown Vendor",
-      phone: "N/A",
-      city: "N/A",
-      state: "N/A",
+  const vendorDetails = vendorMap[order.Vendor] || {
+    name: "Unknown Vendor",
+    phone: "N/A",
+    city: "N/A",
+    state: "N/A",
+  };
+
+  let customerDetails = customerMap[customerKey];
+  if (!customerDetails) {
+    customerDetails = {
+      NAME: "Unknown",
+      ADDRESS1: "N/A",
+      CITY: "N/A",
+      STATE: "N/A",
+      ZIPCODE: "N/A",
+      MAINPHONE: "N/A",
     };
+  }
 
-    let customerDetails = customerMap[customerKey];
-    if (!customerDetails) {
-      customerDetails = {
-        NAME: "Unknown",
-        ADDRESS1: "N/A",
-        CITY: "N/A",
-        STATE: "N/A",
-        ZIPCODE: "N/A",
-        MAINPHONE: "N/A",
-      };
-    }
+  const unitKey = order.UnitNumber ? cleanString(order.UnitNumber) : "";
+  const additionalUnit = unitDetailsMap[unitKey] || {};
 
-    const unitKey = order.UnitNumber ? cleanString(order.UnitNumber) : "";
-    const additionalUnit = unitDetailsMap[unitKey] || {};
+  // Extract RoadCall details from OrderLines if available.
+  let roadCallNum = null;
+  let roadCallId = null;
+  if (order.Sections?.OrderSectionRes?.OrderLines?.OrderLineRes) {
+    const orderLines = Array.isArray(order.Sections.OrderSectionRes.OrderLines.OrderLineRes)
+      ? order.Sections.OrderSectionRes.OrderLines.OrderLineRes
+      : [order.Sections.OrderSectionRes.OrderLines.OrderLineRes];
+    orderLines.forEach((line) => {
+      if (line.LineType === "COMMENT" && line.Description.includes("RC")) {
+        const match = line.Description.match(/RC(\d+)\s*\/\s*(\d+)/);
+        if (match) {
+          roadCallNum = `RC${match[1]}`; // Prepend "RC" to the number
+          roadCallId = match[2];
+        }
+      }
+    });
+  }
 
-    return {
-      orderId: order.OrderID, // Added OrderID field
-      orderNumber: order.OrderNum,
-      status: order.Status,
-      openedDate: order.Opened,
-      closedDate: order.Closed || null,
-      vendor: {
-        code: order.Vendor,
-        name: vendorDetails.name,
-        phone: vendorDetails.phone,
-        city: vendorDetails.city,
-        state: vendorDetails.state,
+  // Fallback to any existing RepOrder values if extraction did not yield results.
+  roadCallId = roadCallId || order.RepOrder?.RoadCallId || null;
+  roadCallNum = roadCallNum || order.RepOrder?.RoadCallNum || null;
+
+  return {
+    orderId: order.OrderID,
+    orderNumber: order.OrderNum,
+    status: order.Status,
+    openedDate: order.Opened,
+    closedDate: order.Closed || null,
+    vendor: {
+      code: order.Vendor,
+      name: vendorDetails.name,
+      phone: vendorDetails.phone,
+      city: vendorDetails.city,
+      state: vendorDetails.state,
+    },
+    unitNumber: {
+      value: order.UnitNumber,
+      details: {
+        UnitNumber: additionalUnit.UnitNumber || "",
+        UnitType: normalizeUnitType(additionalUnit.UnitType),
+        Make: additionalUnit.Make || "",
+        Model: additionalUnit.Model || "",
+        ModelYear: additionalUnit.ModelYear || "",
+        SerialNo: additionalUnit.SerialNo || "",
+        NameCustomer: additionalUnit.NameCustomer || "",
       },
-      unitNumber: {
-        value: order.UnitNumber,
-        details: {
-          UnitNumber: additionalUnit.UnitNumber || "",
-          UnitType: normalizeUnitType(additionalUnit.UnitType),
-          Make: additionalUnit.Make || "",
-          Model: additionalUnit.Model || "",
-          ModelYear: additionalUnit.ModelYear || "",
-          SerialNo: additionalUnit.SerialNo || "",
-          NameCustomer: additionalUnit.NameCustomer || "",
-        },
-      },
-      customer: {
-        key: customerKey,
-        NAME: cleanString(customerDetails.NAME),
-        ADDRESS1: cleanString(customerDetails.ADDRESS1),
-        CITY: cleanString(customerDetails.CITY),
-        STATE: cleanString(customerDetails.STATE),
-        ZIPCODE: cleanString(customerDetails.ZIPCODE),
-        MAINPHONE: cleanString(customerDetails.MAINPHONE),
-      },
-      componentCode: order.Sections?.OrderSectionRes?.CompCode || "",
-      componentDescription: order.Sections?.OrderSectionRes?.CompDesc || "",
-      roadCallId: order.RepOrder?.RoadCallId || null,
-      roadCallNum: order.RepOrder?.RoadCallNum || null,
-    };
-  });
+    },
+    customer: {
+      key: customerKey,
+      NAME: cleanString(customerDetails.NAME),
+      ADDRESS1: cleanString(customerDetails.ADDRESS1),
+      CITY: cleanString(customerDetails.CITY),
+      STATE: cleanString(customerDetails.STATE),
+      ZIPCODE: cleanString(customerDetails.ZIPCODE),
+      MAINPHONE: cleanString(customerDetails.MAINPHONE),
+    },
+    componentCode: order.Sections?.OrderSectionRes?.CompCode || "",
+    componentDescription: order.Sections?.OrderSectionRes?.CompDesc || "",
+    roadCallId,
+    roadCallNum,
+    roadCallLink: roadCallId
+      ? `https://ttx.tmwcloud.com/AMSApp/ng-ams/ams-home.aspx#/road-calls/road-call-detail/${roadCallId}`
+      : null,
+  };
+});
+
 
   // Apply any additional filtering passed in via the query parameter (if needed)
   if (query.fromDate) {

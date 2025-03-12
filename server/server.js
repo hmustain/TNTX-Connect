@@ -30,6 +30,10 @@ app.use('/api/admin', adminRoutes);
 const trimbleRoutes = require('./routes/trimble');
 app.use('/api/trimble', trimbleRoutes);
 
+// Trimble Test Route
+const trimbleTestRoutes = require('./routes/trimbleTest');
+app.use('/api/trimble-test', trimbleTestRoutes);
+
 app.get('/', (req, res) => {
   res.send('TNTX Connect Backend is running!');
 });

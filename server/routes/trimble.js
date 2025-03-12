@@ -6,6 +6,8 @@ const fs = require("fs");
 const path = require("path");
 require("dotenv").config();
 
+const { client } = require("../utils/cache"); // Redis client
+
 // Import the fetchUnitDetails function from trimbleUnit.js
 const { fetchUnitDetails } = require("./trimbleUnit");
 
@@ -63,8 +65,11 @@ fs.readFile(customerDataPath, "utf8", (err, data) => {
   }
 });
 
-// Function that fetches, maps, and returns repair orders
-async function getMappedOrders(query = {}) {
+/**
+ * This function handles the API call to Trimble,
+ * parses the SOAP XML response, and maps the orders.
+ */
+async function fetchOrdersFromTrimble(query = {}) {
   // Build the SOAP request for repair orders
   const soapRequest = `
       <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ams="http://tmwsystems.com/AMS">
@@ -118,98 +123,97 @@ async function getMappedOrders(query = {}) {
     }
   });
 
-// Map each repair order and merge additional unit details.
-let mappedOrders = filteredOrders.map((order) => {
-  const customerKey = order.CustomerNumber ? order.CustomerNumber.trim() : "";
+  // Map each repair order and merge additional unit details.
+  let mappedOrders = filteredOrders.map((order) => {
+    const customerKey = order.CustomerNumber ? order.CustomerNumber.trim() : "";
 
-  const vendorDetails = vendorMap[order.Vendor] || {
-    name: "Unknown Vendor",
-    phone: "N/A",
-    city: "N/A",
-    state: "N/A",
-  };
-
-  let customerDetails = customerMap[customerKey];
-  if (!customerDetails) {
-    customerDetails = {
-      NAME: "Unknown",
-      ADDRESS1: "N/A",
-      CITY: "N/A",
-      STATE: "N/A",
-      ZIPCODE: "N/A",
-      MAINPHONE: "N/A",
+    const vendorDetails = vendorMap[order.Vendor] || {
+      name: "Unknown Vendor",
+      phone: "N/A",
+      city: "N/A",
+      state: "N/A",
     };
-  }
 
-  const unitKey = order.UnitNumber ? cleanString(order.UnitNumber) : "";
-  const additionalUnit = unitDetailsMap[unitKey] || {};
+    let customerDetails = customerMap[customerKey];
+    if (!customerDetails) {
+      customerDetails = {
+        NAME: "Unknown",
+        ADDRESS1: "N/A",
+        CITY: "N/A",
+        STATE: "N/A",
+        ZIPCODE: "N/A",
+        MAINPHONE: "N/A",
+      };
+    }
 
-  // Extract RoadCall details from OrderLines if available.
-  let roadCallNum = null;
-  let roadCallId = null;
-  if (order.Sections?.OrderSectionRes?.OrderLines?.OrderLineRes) {
-    const orderLines = Array.isArray(order.Sections.OrderSectionRes.OrderLines.OrderLineRes)
-      ? order.Sections.OrderSectionRes.OrderLines.OrderLineRes
-      : [order.Sections.OrderSectionRes.OrderLines.OrderLineRes];
-    orderLines.forEach((line) => {
-      if (line.LineType === "COMMENT" && line.Description.includes("RC")) {
-        const match = line.Description.match(/RC(\d+)\s*\/\s*(\d+)/);
-        if (match) {
-          roadCallNum = `RC${match[1]}`; // Prepend "RC" to the number
-          roadCallId = match[2];
+    const unitKey = order.UnitNumber ? cleanString(order.UnitNumber) : "";
+    const additionalUnit = unitDetailsMap[unitKey] || {};
+
+    // Extract RoadCall details from OrderLines if available.
+    let roadCallNum = null;
+    let roadCallId = null;
+    if (order.Sections?.OrderSectionRes?.OrderLines?.OrderLineRes) {
+      const orderLines = Array.isArray(order.Sections.OrderSectionRes.OrderLines.OrderLineRes)
+        ? order.Sections.OrderSectionRes.OrderLines.OrderLineRes
+        : [order.Sections.OrderSectionRes.OrderLines.OrderLineRes];
+      orderLines.forEach((line) => {
+        if (line.LineType === "COMMENT" && line.Description.includes("RC")) {
+          const match = line.Description.match(/RC(\d+)\s*\/\s*(\d+)/);
+          if (match) {
+            roadCallNum = `RC${match[1]}`; // Prepend "RC" to the number
+            roadCallId = match[2];
+          }
         }
-      }
-    });
-  }
+      });
+    }
 
-  // Fallback to any existing RepOrder values if extraction did not yield results.
-  roadCallId = roadCallId || order.RepOrder?.RoadCallId || null;
-  roadCallNum = roadCallNum || order.RepOrder?.RoadCallNum || null;
+    // Fallback to any existing RepOrder values if extraction did not yield results.
+    roadCallId = roadCallId || order.RepOrder?.RoadCallId || null;
+    roadCallNum = roadCallNum || order.RepOrder?.RoadCallNum || null;
 
-  return {
-    orderId: order.OrderID,
-    orderNumber: order.OrderNum,
-    status: order.Status,
-    openedDate: order.Opened,
-    closedDate: order.Closed || null,
-    vendor: {
-      code: order.Vendor,
-      name: vendorDetails.name,
-      phone: vendorDetails.phone,
-      city: vendorDetails.city,
-      state: vendorDetails.state,
-    },
-    unitNumber: {
-      value: order.UnitNumber,
-      details: {
-        UnitNumber: additionalUnit.UnitNumber || "",
-        UnitType: normalizeUnitType(additionalUnit.UnitType),
-        Make: additionalUnit.Make || "",
-        Model: additionalUnit.Model || "",
-        ModelYear: additionalUnit.ModelYear || "",
-        SerialNo: additionalUnit.SerialNo || "",
-        NameCustomer: additionalUnit.NameCustomer || "",
+    return {
+      orderId: order.OrderID,
+      orderNumber: order.OrderNum,
+      status: order.Status,
+      openedDate: order.Opened,
+      closedDate: order.Closed || null,
+      vendor: {
+        code: order.Vendor,
+        name: vendorDetails.name,
+        phone: vendorDetails.phone,
+        city: vendorDetails.city,
+        state: vendorDetails.state,
       },
-    },
-    customer: {
-      key: customerKey,
-      NAME: cleanString(customerDetails.NAME),
-      ADDRESS1: cleanString(customerDetails.ADDRESS1),
-      CITY: cleanString(customerDetails.CITY),
-      STATE: cleanString(customerDetails.STATE),
-      ZIPCODE: cleanString(customerDetails.ZIPCODE),
-      MAINPHONE: cleanString(customerDetails.MAINPHONE),
-    },
-    componentCode: order.Sections?.OrderSectionRes?.CompCode || "",
-    componentDescription: order.Sections?.OrderSectionRes?.CompDesc || "",
-    roadCallId,
-    roadCallNum,
-    roadCallLink: roadCallId
-      ? `https://ttx.tmwcloud.com/AMSApp/ng-ams/ams-home.aspx#/road-calls/road-call-detail/${roadCallId}`
-      : null,
-  };
-});
-
+      unitNumber: {
+        value: order.UnitNumber,
+        details: {
+          UnitNumber: additionalUnit.UnitNumber || "",
+          UnitType: normalizeUnitType(additionalUnit.UnitType),
+          Make: additionalUnit.Make || "",
+          Model: additionalUnit.Model || "",
+          ModelYear: additionalUnit.ModelYear || "",
+          SerialNo: additionalUnit.SerialNo || "",
+          NameCustomer: additionalUnit.NameCustomer || "",
+        },
+      },
+      customer: {
+        key: customerKey,
+        NAME: cleanString(customerDetails.NAME),
+        ADDRESS1: cleanString(customerDetails.ADDRESS1),
+        CITY: cleanString(customerDetails.CITY),
+        STATE: cleanString(customerDetails.STATE),
+        ZIPCODE: cleanString(customerDetails.ZIPCODE),
+        MAINPHONE: cleanString(customerDetails.MAINPHONE),
+      },
+      componentCode: order.Sections?.OrderSectionRes?.CompCode || "",
+      componentDescription: order.Sections?.OrderSectionRes?.CompDesc || "",
+      roadCallId,
+      roadCallNum,
+      roadCallLink: roadCallId
+        ? `https://ttx.tmwcloud.com/AMSApp/ng-ams/ams-home.aspx#/road-calls/road-call-detail/${roadCallId}`
+        : null,
+    };
+  });
 
   // Apply any additional filtering passed in via the query parameter (if needed)
   if (query.fromDate) {
@@ -235,10 +239,50 @@ let mappedOrders = filteredOrders.map((order) => {
   return mappedOrders;
 }
 
+/**
+ * getMappedOrders is our caching wrapper.
+ * It first checks Redis for cached data, and if none is found,
+ * it calls fetchOrdersFromTrimble(), caches the result, and returns it.
+ */
+async function getMappedOrdersCached(query = {}) {
+  const cacheKey = `orders:${JSON.stringify(query)}`;
+  
+  // Check for cached data
+  const cachedData = await client.get(cacheKey);
+  if (cachedData) {
+    console.log("Returning cached orders");
+    
+    // Check remaining TTL (in seconds)
+    const ttl = await client.ttl(cacheKey);
+    // If TTL is less than a threshold (e.g., 60 seconds), trigger background revalidation.
+    if (ttl < 60) {
+      console.log("Cache nearing expiration (TTL:", ttl, "), revalidating in background...");
+      // Trigger background fetch without awaiting its completion.
+      fetchOrdersFromTrimble(query)
+        .then(async (orders) => {
+          await client.setEx(cacheKey, 3600, JSON.stringify(orders)); // reset TTL to 3600 sec
+          console.log("Background cache update complete");
+        })
+        .catch((err) => {
+          console.error("Error during background revalidation:", err);
+        });
+    }
+    
+    // Immediately return cached data
+    return JSON.parse(cachedData);
+  }
+  
+  // If no cached data, fetch and cache it
+  const orders = await fetchOrdersFromTrimble(query);
+  await client.setEx(cacheKey, 3600, JSON.stringify(orders));
+  return orders;
+}
+
+
 // Endpoint to get all repair orders
 router.get("/repair-orders", async (req, res) => {
   try {
-    const orders = await getMappedOrders(req.query);
+    const orders = await getMappedOrdersCached(req.query);
     res.json(orders);
   } catch (error) {
     console.error("Error fetching repair orders:", error.message);
@@ -246,11 +290,11 @@ router.get("/repair-orders", async (req, res) => {
   }
 });
 
-// New endpoint: Get repair order by OrderID
+// New endpoint: Get repair order by OrderID with related orders (repOrders)
 router.get("/repair-orders/:orderId", async (req, res) => {
   try {
     const orderIdParam = req.params.orderId;
-    const allOrders = await getMappedOrders(); // Fetch all orders
+    const allOrders = await getMappedOrdersCached(); // Fetch all orders
 
     // Find the main order based on orderId
     const mainOrder = allOrders.find((o) => o.orderId === orderIdParam);

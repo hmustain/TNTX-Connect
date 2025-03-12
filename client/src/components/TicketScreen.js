@@ -126,23 +126,90 @@ const TicketScreen = () => {
     );
   }
 
-  // Destructure fields from the Trimble repair order
-  const {
-    orderId,
-    orderNumber,
-    status,
-    openedDate,
-    closedDate,
-    vendor,
-    unitNumber,
-    customer,
-    componentCode,
-    componentDescription,
-    roadCallNum,
-    roadCallLink,
-    // If multiple ROs are associated, they'd be in an array:
-    repOrders, // e.g., an array of related ROs
-  } = ticket;
+  // Helper function to render a single RO card
+  const renderROCard = (ro, isMainOrder = false) => {
+    return (
+      <Card className="mb-3" key={ro.orderId}>
+        <Card.Header as="h5" className="d-flex justify-content-between">
+          {isMainOrder ? (
+            <>
+              <span>Ticket Info</span>
+              <span>
+                Road Call:{" "}
+                {ro.roadCallLink ? (
+                  <a
+                    href={ro.roadCallLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {ro.roadCallNum}
+                  </a>
+                ) : (
+                  ro.roadCallNum || "N/A"
+                )}
+              </span>
+            </>
+          ) : (
+            <>Repair Order {ro.orderNumber}</>
+          )}
+        </Card.Header>
+        <Card.Body>
+          <Row>
+            <Col md={6}>
+              <p>
+                <strong>Repair Order #:</strong> {ro.orderNumber}
+              </p>
+              <p>
+                <strong>Status:</strong> {ro.status || "Pending"}
+              </p>
+              <p>
+                <strong>Opened:</strong>{" "}
+                {new Date(ro.openedDate).toLocaleDateString()}
+              </p>
+              <p>
+                <strong>Closed:</strong>{" "}
+                {ro.closedDate && ro.closedDate !== "0001-01-01T00:00:00"
+                  ? new Date(ro.closedDate).toLocaleDateString()
+                  : "N/A"}
+              </p>
+            </Col>
+            <Col md={6}>
+              <p>
+                <strong>Vendor:</strong> {ro.vendor?.name}
+              </p>
+              <p>
+                <strong>Vendor Phone:</strong> {ro.vendor?.phone}
+              </p>
+              <p>
+                <strong>Vendor Location:</strong>{" "}
+                {ro.vendor?.city}, {ro.vendor?.state}
+              </p>
+              <p>
+                <strong>Customer:</strong> {ro.customer?.NAME}
+              </p>
+            </Col>
+          </Row>
+          <Row className="mt-3">
+            <Col md={6}>
+              <p>
+                <strong>Component Code:</strong>{" "}
+                {ro.componentCode || "N/A"}
+              </p>
+            </Col>
+            <Col md={6}>
+              <p>
+                <strong>Component Description:</strong>{" "}
+                {ro.componentDescription || "N/A"}
+              </p>
+            </Col>
+          </Row>
+        </Card.Body>
+      </Card>
+    );
+  };
+
+  // Destructure the main order fields + repOrders
+  const { repOrders, ...mainOrder } = ticket;
 
   return (
     <Container className="my-4">
@@ -155,7 +222,7 @@ const TicketScreen = () => {
           variant="outline-primary"
           onClick={() =>
             window.open(
-              `https://ttx.tmwcloud.com/AMSApp/Orders/RepairCreate.aspx?OrderId=${orderId}`,
+              `https://ttx.tmwcloud.com/AMSApp/Orders/RepairCreate.aspx?OrderId=${mainOrder.orderId}`,
               "_blank"
             )
           }
@@ -167,107 +234,12 @@ const TicketScreen = () => {
       {/* ROW 1: Ticket Info & Unit Details */}
       <Row className="align-items-stretch mb-4">
         <Col md={9}>
-          <Card className="mb-3">
-            {/* Put Road Call # in the Card Header */}
-            <Card.Header as="h5" className="d-flex justify-content-between">
-              <span>Ticket Info</span>
-              <span>
-                Road Call:{" "}
-                {roadCallLink ? (
-                  <a
-                    href={roadCallLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {roadCallNum}
-                  </a>
-                ) : (
-                  roadCallNum || "N/A"
-                )}
-              </span>
-            </Card.Header>
-            <Card.Body>
-              <Row>
-                <Col md={6}>
-                  <p>
-                    <strong>Repair Order #:</strong> {orderNumber}
-                  </p>
-                  <p>
-                    <strong>Status:</strong> {status || "Pending"}
-                  </p>
-                  <p>
-                    <strong>Opened:</strong>{" "}
-                    {new Date(openedDate).toLocaleDateString()}
-                  </p>
-                  <p>
-                    <strong>Closed:</strong>{" "}
-                    {closedDate !== "0001-01-01T00:00:00"
-                      ? new Date(closedDate).toLocaleDateString()
-                      : "N/A"}
-                  </p>
-                </Col>
-                <Col md={6}>
-                  <p>
-                    <strong>Vendor:</strong> {vendor?.name}
-                  </p>
-                  <p>
-                    <strong>Vendor Phone:</strong> {vendor?.phone}
-                  </p>
-                  <p>
-                    <strong>Vendor Location:</strong>{" "}
-                    {vendor?.city}, {vendor?.state}
-                  </p>
-                  <p>
-                    <strong>Customer:</strong> {customer?.NAME}
-                  </p>
-                </Col>
-              </Row>
-              {/* Next row for component code/description horizontally */}
-              <Row className="mt-3">
-                <Col md={6}>
-                  <p>
-                    <strong>Component Code:</strong>{" "}
-                    {componentCode || "N/A"}
-                  </p>
-                </Col>
-                <Col md={6}>
-                  <p>
-                    <strong>Component Description:</strong>{" "}
-                    {componentDescription || "N/A"}
-                  </p>
-                </Col>
-              </Row>
-            </Card.Body>
-          </Card>
+          {/* Render the main order card with all details */}
+          {renderROCard(mainOrder, true)}
 
-          {/* If multiple ROs exist, create separate cards for each additional RO */}
+          {/* Render each additional RO as a full card */}
           {repOrders && repOrders.length > 0 && (
-            <>
-              {repOrders.map((ro) => (
-                <Card key={ro.orderId} className="mb-3">
-                  <Card.Header as="h5">
-                    Repair Order {ro.orderNumber}
-                  </Card.Header>
-                  <Card.Body>
-                    <Row>
-                      <Col md={6}>
-                        <p>
-                          <strong>Component Code:</strong>{" "}
-                          {ro.componentCode || "N/A"}
-                        </p>
-                      </Col>
-                      <Col md={6}>
-                        <p>
-                          <strong>Component Description:</strong>{" "}
-                          {ro.componentDescription || "N/A"}
-                        </p>
-                      </Col>
-                    </Row>
-                    {/* Add more fields from ro if needed */}
-                  </Card.Body>
-                </Card>
-              ))}
-            </>
+            repOrders.map((ro) => renderROCard(ro, false))
           )}
         </Col>
 
@@ -277,29 +249,31 @@ const TicketScreen = () => {
             <Card.Header as="h5">Unit Details</Card.Header>
             <Card.Body>
               <p>
-                <strong>Unit Number:</strong> {unitNumber?.value}
+                <strong>Unit Number:</strong> {mainOrder.unitNumber?.value}
               </p>
               <p>
                 <strong>Unit Type:</strong>{" "}
-                {unitNumber?.details?.UnitType || "N/A"}
+                {mainOrder.unitNumber?.details?.UnitType || "N/A"}
               </p>
               <p>
-                <strong>Make:</strong> {unitNumber?.details?.Make || "N/A"}
+                <strong>Make:</strong>{" "}
+                {mainOrder.unitNumber?.details?.Make || "N/A"}
               </p>
               <p>
-                <strong>Model:</strong> {unitNumber?.details?.Model || "N/A"}
+                <strong>Model:</strong>{" "}
+                {mainOrder.unitNumber?.details?.Model || "N/A"}
               </p>
               <p>
                 <strong>Year:</strong>{" "}
-                {unitNumber?.details?.ModelYear || "N/A"}
+                {mainOrder.unitNumber?.details?.ModelYear || "N/A"}
               </p>
               <p>
                 <strong>Serial No:</strong>{" "}
-                {unitNumber?.details?.SerialNo || "N/A"}
+                {mainOrder.unitNumber?.details?.SerialNo || "N/A"}
               </p>
               <p>
                 <strong>Customer Name:</strong>{" "}
-                {unitNumber?.details?.NameCustomer || "N/A"}
+                {mainOrder.unitNumber?.details?.NameCustomer || "N/A"}
               </p>
             </Card.Body>
           </Card>
@@ -330,7 +304,7 @@ const TicketScreen = () => {
                           }`}
                         >
                           <p style={{ margin: 0 }}>
-                            <strong>{chat.sender?.name || "System"}</strong>:
+                            <strong>{chat.sender?.name || "System"}</strong>:{" "}
                             {chat.message}
                           </p>
                           <small className="chat-timestamp">
@@ -395,16 +369,16 @@ const TicketScreen = () => {
             <Card.Header as="h5">Driver Info</Card.Header>
             <Card.Body>
               <p>
-                <strong>Name:</strong> {customer?.NAME}
+                <strong>Name:</strong> {mainOrder.customer?.NAME}
               </p>
               <p>
-                <strong>Phone:</strong> {customer?.MAINPHONE}
+                <strong>Phone:</strong> {mainOrder.customer?.MAINPHONE}
               </p>
               <p>
                 <strong>Email:</strong> N/A
               </p>
               <p>
-                <strong>Company:</strong> {customer?.NAME}
+                <strong>Company:</strong> {mainOrder.customer?.NAME}
               </p>
             </Card.Body>
           </Card>

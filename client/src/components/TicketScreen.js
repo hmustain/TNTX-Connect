@@ -15,7 +15,7 @@ import AuthContext from "../context/AuthContext";
 import "../ChatScreen.css";
 
 const TicketScreen = () => {
-  const { id } = useParams(); // id represents the Trimble OrderID
+  const { id } = useParams(); // Trimble OrderID
   const navigate = useNavigate();
   const { authData } = useContext(AuthContext);
   const currentUserId = authData?.user?._id;
@@ -33,7 +33,6 @@ const TicketScreen = () => {
   useEffect(() => {
     const fetchTicket = async () => {
       try {
-        // Now fetching from the Trimble endpoint for repair orders by OrderID
         const res = await fetch(`/api/trimble/repair-orders/${id}`, {
           headers: {
             "Content-Type": "application/json",
@@ -56,7 +55,6 @@ const TicketScreen = () => {
     const fetchChats = async () => {
       try {
         setChatLoading(true);
-        // You may want to update this endpoint if chats are tied to a repair order
         const res = await fetch(`/api/chats/ticket/${id}`, {
           headers: {
             "Content-Type": "application/json",
@@ -84,7 +82,7 @@ const TicketScreen = () => {
     }
   }, [chats]);
 
-  const handleEmojiClick = (emojiData, event) => {
+  const handleEmojiClick = (emojiData) => {
     setChatMessage((prev) => prev + emojiData.emoji);
     setShowEmojiPicker(false);
   };
@@ -128,7 +126,7 @@ const TicketScreen = () => {
     );
   }
 
-  // Destructure the fields from the Trimble repair order
+  // Destructure fields from the Trimble repair order
   const {
     orderId,
     orderNumber,
@@ -140,6 +138,10 @@ const TicketScreen = () => {
     customer,
     componentCode,
     componentDescription,
+    roadCallNum,
+    roadCallLink,
+    // If multiple ROs are associated, they'd be in an array:
+    repOrders, // e.g., an array of related ROs
   } = ticket;
 
   return (
@@ -149,7 +151,6 @@ const TicketScreen = () => {
         <Button variant="secondary" onClick={() => navigate("/")}>
           Back to Tickets
         </Button>
-        {/* Button to view the repair order in Trimble */}
         <Button
           variant="outline-primary"
           onClick={() =>
@@ -163,94 +164,142 @@ const TicketScreen = () => {
         </Button>
       </div>
 
-      {/* ROW 1: Ticket Info & Component Details */}
+      {/* ROW 1: Ticket Info & Unit Details */}
       <Row className="align-items-stretch mb-4">
         <Col md={9}>
-          <div
-            className="d-grid"
-            style={{
-              gridTemplateRows: "auto 1fr",
-              height: "100%",
-              gap: "1rem",
-            }}
-          >
-            <Card>
-              <Card.Header as="h5">Ticket Info</Card.Header>
-              <Card.Body>
-                <Row>
-                  <Col md={6}>
-                    <p>
-                      <strong>Repair Order #:</strong> {orderNumber}
-                    </p>
-                    <p>
-                      <strong>Status:</strong> {status || "Pending"}
-                    </p>
-                    <p>
-                      <strong>Opened:</strong>{" "}
-                      {new Date(openedDate).toLocaleDateString()}
-                    </p>
-                    <p>
-                      <strong>Closed:</strong>{" "}
-                      {closedDate !== "0001-01-01T00:00:00" ? new Date(closedDate).toLocaleDateString() : "N/A"}
-                    </p>
-                  </Col>
-                  <Col md={6}>
-                    <p>
-                      <strong>Vendor:</strong> {vendor.name}
-                    </p>
-                    <p>
-                      <strong>Vendor Phone:</strong> {vendor.phone}
-                    </p>
-                    <p>
-                      <strong>Vendor Location:</strong> {vendor.city}, {vendor.state}
-                    </p>
-                    <p>
-                      <strong>Customer:</strong> {customer.NAME}
-                    </p>
-                  </Col>
-                </Row>
-              </Card.Body>
-            </Card>
+          <Card className="mb-3">
+            {/* Put Road Call # in the Card Header */}
+            <Card.Header as="h5" className="d-flex justify-content-between">
+              <span>Ticket Info</span>
+              <span>
+                Road Call:{" "}
+                {roadCallLink ? (
+                  <a
+                    href={roadCallLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {roadCallNum}
+                  </a>
+                ) : (
+                  roadCallNum || "N/A"
+                )}
+              </span>
+            </Card.Header>
+            <Card.Body>
+              <Row>
+                <Col md={6}>
+                  <p>
+                    <strong>Repair Order #:</strong> {orderNumber}
+                  </p>
+                  <p>
+                    <strong>Status:</strong> {status || "Pending"}
+                  </p>
+                  <p>
+                    <strong>Opened:</strong>{" "}
+                    {new Date(openedDate).toLocaleDateString()}
+                  </p>
+                  <p>
+                    <strong>Closed:</strong>{" "}
+                    {closedDate !== "0001-01-01T00:00:00"
+                      ? new Date(closedDate).toLocaleDateString()
+                      : "N/A"}
+                  </p>
+                </Col>
+                <Col md={6}>
+                  <p>
+                    <strong>Vendor:</strong> {vendor?.name}
+                  </p>
+                  <p>
+                    <strong>Vendor Phone:</strong> {vendor?.phone}
+                  </p>
+                  <p>
+                    <strong>Vendor Location:</strong>{" "}
+                    {vendor?.city}, {vendor?.state}
+                  </p>
+                  <p>
+                    <strong>Customer:</strong> {customer?.NAME}
+                  </p>
+                </Col>
+              </Row>
+              {/* Next row for component code/description horizontally */}
+              <Row className="mt-3">
+                <Col md={6}>
+                  <p>
+                    <strong>Component Code:</strong>{" "}
+                    {componentCode || "N/A"}
+                  </p>
+                </Col>
+                <Col md={6}>
+                  <p>
+                    <strong>Component Description:</strong>{" "}
+                    {componentDescription || "N/A"}
+                  </p>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
 
-            <Card className="h-100">
-              <Card.Header as="h5">Component Details</Card.Header>
-              <Card.Body>
-                <p>
-                  <strong>Component Code:</strong> {componentCode || "N/A"}
-                </p>
-                <p>
-                  <strong>Component Description:</strong> {componentDescription || "N/A"}
-                </p>
-              </Card.Body>
-            </Card>
-          </div>
+          {/* If multiple ROs exist, create separate cards for each additional RO */}
+          {repOrders && repOrders.length > 0 && (
+            <>
+              {repOrders.map((ro) => (
+                <Card key={ro.orderId} className="mb-3">
+                  <Card.Header as="h5">
+                    Repair Order {ro.orderNumber}
+                  </Card.Header>
+                  <Card.Body>
+                    <Row>
+                      <Col md={6}>
+                        <p>
+                          <strong>Component Code:</strong>{" "}
+                          {ro.componentCode || "N/A"}
+                        </p>
+                      </Col>
+                      <Col md={6}>
+                        <p>
+                          <strong>Component Description:</strong>{" "}
+                          {ro.componentDescription || "N/A"}
+                        </p>
+                      </Col>
+                    </Row>
+                    {/* Add more fields from ro if needed */}
+                  </Card.Body>
+                </Card>
+              ))}
+            </>
+          )}
         </Col>
 
-        {/* ROW 1: RIGHT - Unit Details */}
+        {/* UNIT DETAILS */}
         <Col md={3}>
           <Card>
             <Card.Header as="h5">Unit Details</Card.Header>
             <Card.Body>
               <p>
-                <strong>Unit Number:</strong> {unitNumber.value}
+                <strong>Unit Number:</strong> {unitNumber?.value}
               </p>
               <p>
-                <strong>Unit Type:</strong> {unitNumber.details?.UnitType || "N/A"}
+                <strong>Unit Type:</strong>{" "}
+                {unitNumber?.details?.UnitType || "N/A"}
               </p>
               <p>
-                <strong>Make:</strong> {unitNumber.details?.Make || "N/A"}
+                <strong>Make:</strong> {unitNumber?.details?.Make || "N/A"}
               </p>
               <p>
-                <strong>Model:</strong> {unitNumber.details?.Model || "N/A"}
+                <strong>Model:</strong> {unitNumber?.details?.Model || "N/A"}
               </p>
               <p>
-                <strong>Year:</strong> {unitNumber.details?.ModelYear || "N/A"}
+                <strong>Year:</strong>{" "}
+                {unitNumber?.details?.ModelYear || "N/A"}
               </p>
               <p>
-                <strong>Serial No:</strong> {unitNumber.details?.SerialNo || "N/A"}
+                <strong>Serial No:</strong>{" "}
+                {unitNumber?.details?.SerialNo || "N/A"}
               </p>
               <p>
-                <strong>Customer Name:</strong> {unitNumber.details?.NameCustomer || "N/A"}
+                <strong>Customer Name:</strong>{" "}
+                {unitNumber?.details?.NameCustomer || "N/A"}
               </p>
             </Card.Body>
           </Card>
@@ -259,7 +308,6 @@ const TicketScreen = () => {
 
       {/* ROW 2: Chat & Driver Info */}
       <Row>
-        {/* LEFT: Chat Section */}
         <Col md={9}>
           <Card className="mb-3">
             <Card.Header as="h5">Chat</Card.Header>
@@ -277,10 +325,13 @@ const TicketScreen = () => {
                       return (
                         <div
                           key={chat._id}
-                          className={`chat-bubble ${isCurrentUser ? "sender" : "receiver"}`}
+                          className={`chat-bubble ${
+                            isCurrentUser ? "sender" : "receiver"
+                          }`}
                         >
                           <p style={{ margin: 0 }}>
-                            <strong>{chat.sender?.name || "System"}</strong>: {chat.message}
+                            <strong>{chat.sender?.name || "System"}</strong>:
+                            {chat.message}
                           </p>
                           <small className="chat-timestamp">
                             {new Date(chat.createdAt).toLocaleString()}
@@ -291,7 +342,6 @@ const TicketScreen = () => {
                   )}
                 </div>
               )}
-
               <div
                 style={{
                   display: "flex",
@@ -332,7 +382,6 @@ const TicketScreen = () => {
                   )}
                 </InputGroup>
               </div>
-
               {showEmojiPicker && (
                 <div style={{ position: "absolute", bottom: "150px", zIndex: 10 }}>
                   <EmojiPicker onEmojiClick={handleEmojiClick} />
@@ -341,16 +390,22 @@ const TicketScreen = () => {
             </Card.Body>
           </Card>
         </Col>
-
-        {/* RIGHT: Driver Info */}
         <Col md={3}>
           <Card>
             <Card.Header as="h5">Driver Info</Card.Header>
             <Card.Body>
-              <p><strong>Name:</strong> {customer.NAME}</p>
-              <p><strong>Phone:</strong> {customer.MAINPHONE}</p>
-              <p><strong>Email:</strong> N/A</p>
-              <p><strong>Company:</strong> {customer.NAME}</p>
+              <p>
+                <strong>Name:</strong> {customer?.NAME}
+              </p>
+              <p>
+                <strong>Phone:</strong> {customer?.MAINPHONE}
+              </p>
+              <p>
+                <strong>Email:</strong> N/A
+              </p>
+              <p>
+                <strong>Company:</strong> {customer?.NAME}
+              </p>
             </Card.Body>
           </Card>
         </Col>

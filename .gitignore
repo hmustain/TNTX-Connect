@@ -135,3 +135,6 @@ server/data/vendors.json
 # customer json file
 server/data/customers.json
 
+# dump.rdb
+dump.rdb
+

@@ -160,8 +160,8 @@ const LandingScreen = () => {
       <th>Company</th>
       <th>Unit #</th>
       <th>Complaint</th>
-      <th>Location</th>
-      <th>Driver Name</th>
+      {/* <th>Location</th> */}
+      {/* <th>Driver Name</th> */}
       <th>Date</th>
       <th>Time Elapsed</th>
       <th>Status</th>
@@ -232,20 +232,20 @@ const LandingScreen = () => {
           <td>{order.customer?.NAME || "None"}</td>
           <td>{order.unitNumber?.value}</td>
           <td>{order.componentDescription}</td>
-          <td>
+          {/* <td>
             <input
               type="text"
               placeholder="Enter Location"
               defaultValue={order.location || ""}
             />
-          </td>
-          <td>
+          </td> */}
+          {/* <td>
             <input
               type="text"
               placeholder="Enter Driver Name"
               defaultValue={order.driverName || ""}
             />
-          </td>
+          </td> */}
           <td>{new Date(order.openedDate).toLocaleDateString()}</td>
           <td>{renderElapsedTimeExtended(order.openedDate)}</td>
           <td>{order.status}</td>

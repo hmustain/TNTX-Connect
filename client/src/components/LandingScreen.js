@@ -73,13 +73,15 @@ const LandingScreen = () => {
   // We assume all orders have a roadCallId.
   // In case an order doesn't have one, we group it by its orderId.
   const groupedOrders = displayedOrders.reduce((groups, order) => {
-    const key = order.roadCallId || order.orderId;
+    // Use roadCallNum as the key
+    const key = order.roadCallNum || order.orderId;
     if (!groups[key]) {
       groups[key] = [];
     }
     groups[key].push(order);
     return groups;
   }, {});
+  
 
   return (
     <Container className="my-4 text-center">
@@ -149,106 +151,111 @@ const LandingScreen = () => {
               minHeight: "400px",
             }}
           >
-            <Table striped bordered hover responsive className="text-center">
-              <thead className="table-dark">
-                <tr style={{ verticalAlign: "middle" }}>
-                  {/* New RC# column */}
-                  <th>RC #</th>
-                  <th>RO #</th>
-                  <th>Unit Type</th>
-                  <th>Company</th>
-                  <th>Unit #</th>
-                  <th>Complaint</th>
-                  <th>Location</th>
-                  <th>Driver Name</th>
-                  <th>Date</th>
-                  <th>Time Elapsed</th>
-                  <th>Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ordersLoading ? (
-                  <tr style={{ verticalAlign: "middle" }}>
-                    <td colSpan="11" className="text-center">
-                      Loading...
-                    </td>
-                  </tr>
-                ) : Object.keys(groupedOrders).length === 0 ? (
-                  <tr style={{ verticalAlign: "middle" }}>
-                    <td colSpan="11" className="text-center">
-                      No {ticketView} orders available.
-                    </td>
-                  </tr>
-                ) : (
-                  Object.values(groupedOrders).map((group) =>
-                    group.map((order, index) => (
-                      <tr
-                        key={order.orderId}
-                        style={{ verticalAlign: "middle", cursor: "pointer" }}
-                        onClick={() => navigate(`/ticket/${order.orderId}`)}
-                      >
-                        {/* Only show the RC cell once per group */}
-                        {index === 0 && (
-                          <td rowSpan={group.length}>
-                            {order.roadCallLink ? (
-                              <a
-                                href={order.roadCallLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                {order.roadCallNum}
-                              </a>
-                            ) : (
-                              order.roadCallNum || "N/A"
-                            )}
-                          </td>
-                        )}
-                        <td>
-                          <a
-                            href={`https://ttx.tmwcloud.com/AMSApp/Orders/RepairCreate.aspx?OrderId=${order.orderId}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            {order.orderNumber}
-                          </a>
-                        </td>
-                        <td>
-                          <UnitIcon
-                            unitType={order.unitNumber?.details?.UnitType}
-                            size={48}
-                            color="#000"
-                          />
-                        </td>
-                        <td>{order.customer?.NAME || "None"}</td>
-                        <td>{order.unitNumber?.value}</td>
-                        <td>{order.componentDescription}</td>
-                        <td>
-                          <input
-                            type="text"
-                            placeholder="Enter Location"
-                            defaultValue={order.location || ""}
-                          />
-                        </td>
-                        <td>
-                          <input
-                            type="text"
-                            placeholder="Enter Driver Name"
-                            defaultValue={order.driverName || ""}
-                          />
-                        </td>
-                        <td>
-                          {new Date(order.openedDate).toLocaleDateString()}
-                        </td>
-                        <td>{renderElapsedTimeExtended(order.openedDate)}</td>
-                        <td>{order.status}</td>
-                      </tr>
-                    ))
-                  )
-                )}
-              </tbody>
-            </Table>
+            <Table bordered hover responsive className="text-center">
+  <thead className="table-dark">
+    <tr style={{ verticalAlign: "middle" }}>
+      <th>RC #</th>
+      <th>RO #</th>
+      <th>Unit Type</th>
+      <th>Company</th>
+      <th>Unit #</th>
+      <th>Complaint</th>
+      <th>Location</th>
+      <th>Driver Name</th>
+      <th>Date</th>
+      <th>Time Elapsed</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody>
+  {ordersLoading ? (
+    <tr style={{ verticalAlign: "middle" }}>
+      <td colSpan="11" className="text-center">
+        Loading...
+      </td>
+    </tr>
+  ) : Object.keys(groupedOrders).length === 0 ? (
+    <tr style={{ verticalAlign: "middle" }}>
+      <td colSpan="11" className="text-center">
+        No {ticketView} orders available.
+      </td>
+    </tr>
+  ) : (
+    Object.entries(groupedOrders).map(([groupKey, groupOrders], groupIndex) => {
+      // Make the difference more obvious for testing
+      const backgroundColor = groupIndex % 2 === 0 ? "#ffffcc" : "#ffffff";
+
+      return groupOrders.map((order, index) => (
+        <tr
+          key={order.orderId}
+          style={{
+            backgroundColor,
+            verticalAlign: "middle",
+            cursor: "pointer",
+          }}
+          onClick={() => navigate(`/ticket/${order.orderId}`)}
+        >
+          {/* Only show the RC cell once per group */}
+          {index === 0 && (
+            <td rowSpan={groupOrders.length}>
+              {order.roadCallLink ? (
+                <a
+                  href={order.roadCallLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {order.roadCallNum}
+                </a>
+              ) : (
+                order.roadCallNum || "N/A"
+              )}
+            </td>
+          )}
+          <td>
+            <a
+              href={`https://ttx.tmwcloud.com/AMSApp/Orders/RepairCreate.aspx?OrderId=${order.orderId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {order.orderNumber}
+            </a>
+          </td>
+          <td>
+            <UnitIcon
+              unitType={order.unitNumber?.details?.UnitType}
+              size={48}
+              color="#000"
+            />
+          </td>
+          <td>{order.customer?.NAME || "None"}</td>
+          <td>{order.unitNumber?.value}</td>
+          <td>{order.componentDescription}</td>
+          <td>
+            <input
+              type="text"
+              placeholder="Enter Location"
+              defaultValue={order.location || ""}
+            />
+          </td>
+          <td>
+            <input
+              type="text"
+              placeholder="Enter Driver Name"
+              defaultValue={order.driverName || ""}
+            />
+          </td>
+          <td>{new Date(order.openedDate).toLocaleDateString()}</td>
+          <td>{renderElapsedTimeExtended(order.openedDate)}</td>
+          <td>{order.status}</td>
+        </tr>
+      ));
+    })
+  )}
+</tbody>
+
+</Table>
           </div>
         </>
       ) : (

@@ -250,13 +250,28 @@ router.get("/repair-orders", async (req, res) => {
 router.get("/repair-orders/:orderId", async (req, res) => {
   try {
     const orderIdParam = req.params.orderId;
-    const orders = await getMappedOrders();
-    // Find the order where orderId matches the parameter.
-    const order = orders.find((o) => o.orderId === orderIdParam);
-    if (!order) {
+    const allOrders = await getMappedOrders(); // Fetch all orders
+
+    // Find the main order based on orderId
+    const mainOrder = allOrders.find((o) => o.orderId === orderIdParam);
+    if (!mainOrder) {
       return res.status(404).json({ error: "Repair order not found" });
     }
-    res.json(order);
+
+    // If the main order has a roadCallId, find all orders sharing it (excluding the main order)
+    let relatedOrders = [];
+    if (mainOrder.roadCallId) {
+      relatedOrders = allOrders.filter(
+        (o) =>
+          o.roadCallId === mainOrder.roadCallId &&
+          o.orderId !== mainOrder.orderId
+      );
+    }
+
+    // Attach related orders as repOrders
+    mainOrder.repOrders = relatedOrders;
+
+    res.json(mainOrder);
   } catch (error) {
     console.error("Error fetching repair order by id:", error.message);
     res.status(500).json({ error: "Failed to fetch repair order" });

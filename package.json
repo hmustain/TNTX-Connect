@@ -4,10 +4,11 @@
   "private": true,
   "proxy": "http://localhost:5000",
   "scripts": {
-    "start:server": "cd server && npm start",
-    "start:client": "cd client && npm start",
-    "start": "concurrently \"npm run start:server\" \"npm run start:client\""
-  },
+  "start:redis": "redis-server",
+  "start:server": "cd server && npm start",
+  "start:client": "cd client && npm start",
+  "start": "concurrently \"npm run start:redis\" \"npm run start:server\" \"npm run start:client\""
+},
 
   "devDependencies": {
     "concurrently": "^9.1.2"

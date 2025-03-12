@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "start:redis": "redis-server",
     "test": "jest --watchAll",
     "seed:companies": "node seedCompanies.js",
     "seed:users": "node seedUsers.js",
@@ -10,7 +11,7 @@
     "seed:chats": "node seedChats.js",
     "seed": "npm run seed:companies && npm run seed:users && npm run seed:tickets && npm run seed:chats",
     "prestart": "npm run seed",
-    "start": "node server.js"
+    "start": "concurrently \"npm run start:redis\" \"node server.js\""
   },
   "keywords": [],
   "author": "",
@@ -27,6 +28,7 @@
     "mongoose": "^8.10.1",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.10.0",
+    "redis": "^4.7.0",
     "socket.io": "^4.8.1",
     "xml2js": "^0.6.2"
   },

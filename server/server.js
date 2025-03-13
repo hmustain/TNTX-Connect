@@ -27,8 +27,8 @@ const adminRoutes = require('./routes/admin');
 app.use('/api/admin', adminRoutes);
 
 // Trimble Route
-const trimbleRoutes = require('./routes/trimble');
-app.use('/api/trimble', trimbleRoutes);
+const { router: trimbleRouter } = require('./routes/trimble');
+app.use('/api/trimble', trimbleRouter);
 
 // Trimble Test Route
 const trimbleTestRoutes = require('./routes/trimbleTest');

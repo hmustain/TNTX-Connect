@@ -7,6 +7,7 @@ const path = require("path");
 require("dotenv").config();
 
 const { client } = require("../utils/cache"); // Redis client
+const Company = require("../models/Company"); // Import Company model
 
 // Import the fetchUnitDetails function from trimbleUnit.js
 const { fetchUnitDetails } = require("./trimbleUnit");
@@ -67,7 +68,7 @@ fs.readFile(customerDataPath, "utf8", (err, data) => {
 
 /**
  * This function handles the API call to Trimble,
- * parses the SOAP XML response, and maps the orders.
+ * parses the SOAP XML response, maps the orders, and assigns the company.
  */
 async function fetchOrdersFromTrimble(query = {}) {
   // Build the SOAP request for repair orders
@@ -123,9 +124,36 @@ async function fetchOrdersFromTrimble(query = {}) {
     }
   });
 
-  // Map each repair order and merge additional unit details.
+  // Allowed customer keys that are valid in your system
+  const allowedCustomerKeys = [
+    "MELTON",
+    "104376",
+    "ROYAL",
+    "HODGES",
+    "SMT",
+    "CCT",
+    "BIGM",
+    "WATKINS",
+    "WILSON",
+    "MC EXPRESS",
+    "SKY",
+    "TNTXSOL"
+  ];
+
+  // Query your Company collection to build a mapping from trimbleCode to ObjectId
+  const companiesFromDB = await Company.find({ trimbleCode: { $in: allowedCustomerKeys } });
+  const companyMapping = {};
+  companiesFromDB.forEach(comp => {
+    // Use uppercase for consistency
+    companyMapping[comp.trimbleCode.toUpperCase()] = comp._id.toString();
+  });
+
+  // Map each repair order, merge additional unit details, and assign company based on customer key.
   let mappedOrders = filteredOrders.map((order) => {
-    const customerKey = order.CustomerNumber ? order.CustomerNumber.trim() : "";
+    // Extract customer key from either Order.CustomerNumber or order.customer.key
+    const customerKey = order.CustomerNumber 
+      ? order.CustomerNumber.trim() 
+      : (order.customer && order.customer.key ? order.customer.key.trim() : "");
 
     const vendorDetails = vendorMap[order.Vendor] || {
       name: "Unknown Vendor",
@@ -160,16 +188,18 @@ async function fetchOrdersFromTrimble(query = {}) {
         if (line.LineType === "COMMENT" && line.Description.includes("RC")) {
           const match = line.Description.match(/RC(\d+)\s*\/\s*(\d+)/);
           if (match) {
-            roadCallNum = `RC${match[1]}`; // Prepend "RC" to the number
+            roadCallNum = `RC${match[1]}`;
             roadCallId = match[2];
           }
         }
       });
     }
 
-    // Fallback to any existing RepOrder values if extraction did not yield results.
     roadCallId = roadCallId || order.RepOrder?.RoadCallId || null;
     roadCallNum = roadCallNum || order.RepOrder?.RoadCallNum || null;
+
+    // Look up the internal Company ObjectId using the customer key from the order.
+    const companyId = companyMapping[customerKey.toUpperCase()] || null;
 
     return {
       orderId: order.OrderID,
@@ -212,6 +242,8 @@ async function fetchOrdersFromTrimble(query = {}) {
       roadCallLink: roadCallId
         ? `https://ttx.tmwcloud.com/AMSApp/ng-ams/ams-home.aspx#/road-calls/road-call-detail/${roadCallId}`
         : null,
+      // Assign the company ObjectId based on the customer key
+      company: companyId,
     };
   });
 
@@ -222,27 +254,13 @@ async function fetchOrdersFromTrimble(query = {}) {
   }
 
   // Filter to only include orders from allowed customers
-  const allowedCustomerKeys = [
-    "MELTON",
-    "104376",
-    "ROYAL",
-    "HODGES",
-    "SMT",
-    "CCT",
-    "BIGM",
-    "WATKINS",
-    "WILSON",
-    "MC EXPRESS",
-    "SKY",
-    "TNTXSOL"
-  ];
   mappedOrders = mappedOrders.filter((order) => allowedCustomerKeys.includes(order.customer.key));
 
   return mappedOrders;
 }
 
 /**
- * getMappedOrders is our caching wrapper.
+ * getMappedOrdersCached is our caching wrapper.
  * It first checks Redis for cached data, and if none is found,
  * it calls fetchOrdersFromTrimble(), caches the result, and returns it.
  */
@@ -256,13 +274,11 @@ async function getMappedOrdersCached(query = {}) {
     
     // Check remaining TTL (in seconds)
     const ttl = await client.ttl(cacheKey);
-    // If TTL is less than a threshold (e.g., 60 seconds), trigger background revalidation.
     if (ttl < 60) {
       console.log("Cache nearing expiration (TTL:", ttl, "), revalidating in background...");
-      // Trigger background fetch without awaiting its completion.
       fetchOrdersFromTrimble(query)
         .then(async (orders) => {
-          await client.setEx(cacheKey, 3600, JSON.stringify(orders)); // reset TTL to 3600 sec
+          await client.setEx(cacheKey, 3600, JSON.stringify(orders));
           console.log("Background cache update complete");
         })
         .catch((err) => {
@@ -270,16 +286,13 @@ async function getMappedOrdersCached(query = {}) {
         });
     }
     
-    // Immediately return cached data
     return JSON.parse(cachedData);
   }
   
-  // If no cached data, fetch and cache it
   const orders = await fetchOrdersFromTrimble(query);
   await client.setEx(cacheKey, 3600, JSON.stringify(orders));
   return orders;
 }
-
 
 // Endpoint to get all repair orders
 router.get("/repair-orders", async (req, res) => {
@@ -296,15 +309,13 @@ router.get("/repair-orders", async (req, res) => {
 router.get("/repair-orders/:orderId", async (req, res) => {
   try {
     const orderIdParam = req.params.orderId;
-    const allOrders = await getMappedOrdersCached(); // Fetch all orders
+    const allOrders = await getMappedOrdersCached();
 
-    // Find the main order based on orderId
     const mainOrder = allOrders.find((o) => o.orderId === orderIdParam);
     if (!mainOrder) {
       return res.status(404).json({ error: "Repair order not found" });
     }
 
-    // If the main order has a roadCallId, find all orders sharing it (excluding the main order)
     let relatedOrders = [];
     if (mainOrder.roadCallId) {
       relatedOrders = allOrders.filter(
@@ -313,8 +324,6 @@ router.get("/repair-orders/:orderId", async (req, res) => {
           o.orderId !== mainOrder.orderId
       );
     }
-
-    // Attach related orders as repOrders
     mainOrder.repOrders = relatedOrders;
 
     res.json(mainOrder);
@@ -324,4 +333,4 @@ router.get("/repair-orders/:orderId", async (req, res) => {
   }
 });
 
-module.exports = router;
+module.exports = { router, getMappedOrdersCached };

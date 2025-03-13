@@ -3,16 +3,25 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const Company = require('../models/Company')
 
-// Function to register a new user
+// server/controllers/authController.js
+
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password, companyName, role } = req.body;
+    const { name, email, password, companyIdentifier, role } = req.body;
 
-    // Find the company by name (case-insensitive)
-    const company = await Company.findOne({ name: { $regex: new RegExp("^" + companyName + "$", "i") } });
+    // Find the company by name or by trimbleCode (case-insensitive for name)
+    const company = await Company.findOne({
+      $or: [
+        { name: { $regex: new RegExp("^" + companyIdentifier + "$", "i") } },
+        { trimbleCode: companyIdentifier }
+      ]
+    });
 
     if (!company) {
-      return res.status(400).json({ success: false, error: "Company not found. Please enter a valid company name." });
+      return res.status(400).json({
+        success: false,
+        error: "Company not found. Please enter a valid company identifier."
+      });
     }
 
     // Create a new user with the company ID assigned
@@ -25,7 +34,7 @@ const registerUser = async (req, res) => {
     });
 
     // Populate the company field before sending response
-    await user.populate('company', 'name');
+    await user.populate('company', 'name trimbleCode');
 
     // Generate JWT token for authentication
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '30d' });
@@ -35,11 +44,11 @@ const registerUser = async (req, res) => {
       data: user,
       token,
     });
-
   } catch (err) {
     res.status(400).json({ success: false, error: err.message });
   }
 };
+
 
 
 // Function to log in an existing user

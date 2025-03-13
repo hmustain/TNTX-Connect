@@ -1,8 +1,8 @@
 // LandingScreen.js
 import React, { useState } from "react";
-import useRepairOrders from "../hooks/useRepairOrders";
+import useFilteredTickets from "../hooks/useFilteredTickets";
 import useCurrentUser from "../hooks/useCurrentUser";
-import { Container, Row, Col, Button, Table } from "react-bootstrap";
+import { Container, Row, Col, Button, Table, Spinner } from "react-bootstrap";
 import { useNavigate } from "react-router-dom";
 import { differenceInMinutes } from "date-fns";
 import { PiTruckTrailerFill } from "react-icons/pi";
@@ -35,9 +35,12 @@ const renderElapsedTimeExtended = (openedDate) => {
 
 const LandingScreen = () => {
   const { user, loading: userLoading } = useCurrentUser();
-  const isAuthenticated = Boolean(user);
-  const { orders, loading: ordersLoading, error } = useRepairOrders();
+  const { tickets, loading: ordersLoading, error } = useFilteredTickets(user);
   const navigate = useNavigate();
+
+  // For debugging: log user and orders
+  console.log("User in LandingScreen:", user);
+  console.log("Tickets in LandingScreen:", tickets);
 
   // Toggle between active and historical views
   const [ticketView, setTicketView] = useState("active"); // "active" or "historical"
@@ -49,13 +52,10 @@ const LandingScreen = () => {
     unitType: "",
   });
 
-  // Filter orders using the criteria from the filter modal
-  const filteredOrders = orders.filter((order) => {
+  // Filtering logic (keep as is, or temporarily bypass for debugging)
+  const filteredOrders = (tickets || []).filter((order) => {
     if (filter.status && order.status !== filter.status) return false;
-    if (
-      filter.unitType &&
-      order.unitNumber?.details?.UnitType !== filter.unitType
-    )
+    if (filter.unitType && order.unitNumber?.details?.UnitType !== filter.unitType)
       return false;
     return true;
   });
@@ -69,11 +69,8 @@ const LandingScreen = () => {
     }
   });
 
-  // Group displayed orders by RC.
-  // We assume all orders have a roadCallId.
-  // In case an order doesn't have one, we group it by its orderId.
+  // Group orders by roadCallNum or orderId
   const groupedOrders = displayedOrders.reduce((groups, order) => {
-    // Use roadCallNum as the key
     const key = order.roadCallNum || order.orderId;
     if (!groups[key]) {
       groups[key] = [];
@@ -81,36 +78,35 @@ const LandingScreen = () => {
     groups[key].push(order);
     return groups;
   }, {});
-  
+
+  // If user or orders are still loading, show spinner with message
+  if (userLoading || ordersLoading) {
+    return (
+      <Container className="my-4 text-center">
+        <div className="d-flex flex-column justify-content-center align-items-center py-4">
+          <Spinner animation="border" role="status" className="mb-2">
+            <span className="visually-hidden">Loading...</span>
+          </Spinner>
+          <div>Loading tickets...</div>
+        </div>
+      </Container>
+    );
+  }
 
   return (
     <Container className="my-4 text-center">
-      {userLoading ? (
-        <div className="text-center">Loading user data...</div>
-      ) : isAuthenticated ? (
+      {user ? (
         <>
           {/* Action Buttons */}
           <Row className="mb-3 text-start">
             <Col>
-              <Button
-                variant="secondary"
-                className="me-2 mb-2"
-                onClick={() => setTicketView("active")}
-              >
+              <Button variant="secondary" className="me-2 mb-2" onClick={() => setTicketView("active")}>
                 Active Tickets
               </Button>
-              <Button
-                variant="secondary"
-                className="me-2 mb-2"
-                onClick={() => setTicketView("historical")}
-              >
+              <Button variant="secondary" className="me-2 mb-2" onClick={() => setTicketView("historical")}>
                 Historical Tickets
               </Button>
-              <Button
-                variant="secondary"
-                className="me-2 mb-2"
-                onClick={() => navigate("/breakdown")}
-              >
+              <Button variant="secondary" className="me-2 mb-2" onClick={() => navigate("/breakdown")}>
                 Submit a Breakdown Ticket
               </Button>
             </Col>
@@ -120,21 +116,15 @@ const LandingScreen = () => {
               <Button variant="outline-primary" className="me-2">
                 Action Needed Work Orders
               </Button>
-              <Button variant="outline-primary">
-                All Active Work Orders
-              </Button>
+              <Button variant="outline-primary">All Active Work Orders</Button>
             </Col>
             <Col className="text-end">
-              <Button
-                variant="outline-secondary"
-                onClick={() => setShowFilterModal(true)}
-              >
+              <Button variant="outline-secondary" onClick={() => setShowFilterModal(true)}>
                 Filter
               </Button>
             </Col>
           </Row>
 
-          {/* Filter Modal */}
           <FilterModal
             show={showFilterModal}
             onClose={() => setShowFilterModal(false)}
@@ -142,133 +132,86 @@ const LandingScreen = () => {
             setFilter={setFilter}
           />
 
-          {/* Table displaying the Trimble data */}
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "center",
-              alignItems: "center",
-              minHeight: "400px",
-            }}
-          >
-            <Table bordered hover responsive className="text-center">
-  <thead className="table-dark">
-    <tr style={{ verticalAlign: "middle" }}>
-      <th>RC #</th>
-      <th>RO #</th>
-      <th>Unit Type</th>
-      <th>Company</th>
-      <th>Unit #</th>
-      <th>Complaint</th>
-      {/* <th>Location</th> */}
-      {/* <th>Driver Name</th> */}
-      <th>Date</th>
-      <th>Time Elapsed</th>
-      <th>Status</th>
-    </tr>
-  </thead>
-  <tbody>
-  {ordersLoading ? (
-    <tr style={{ verticalAlign: "middle" }}>
-      <td colSpan="11" className="text-center">
-        Loading...
-      </td>
-    </tr>
-  ) : Object.keys(groupedOrders).length === 0 ? (
-    <tr style={{ verticalAlign: "middle" }}>
-      <td colSpan="11" className="text-center">
-        No {ticketView} orders available.
-      </td>
-    </tr>
-  ) : (
-    Object.entries(groupedOrders).map(([groupKey, groupOrders], groupIndex) => {
-      // Make the difference more obvious for testing
-      const backgroundColor = groupIndex % 2 === 0 ? "#ffffcc" : "#ffffff";
-
-      return groupOrders.map((order, index) => (
-        <tr
-          key={order.orderId}
-          style={{
-            backgroundColor,
-            verticalAlign: "middle",
-            cursor: "pointer",
-          }}
-          onClick={() => navigate(`/ticket/${order.orderId}`)}
-        >
-          {/* Only show the RC cell once per group */}
-          {index === 0 && (
-            <td rowSpan={groupOrders.length}>
-              {order.roadCallLink ? (
-                <a
-                  href={order.roadCallLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {order.roadCallNum}
-                </a>
-              ) : (
-                order.roadCallNum || "N/A"
-              )}
-            </td>
-          )}
-          <td>
-            <a
-              href={`https://ttx.tmwcloud.com/AMSApp/Orders/RepairCreate.aspx?OrderId=${order.orderId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {order.orderNumber}
-            </a>
-          </td>
-          <td>
-            <UnitIcon
-              unitType={order.unitNumber?.details?.UnitType}
-              size={48}
-              color="#000"
-            />
-          </td>
-          <td>{order.customer?.NAME || "None"}</td>
-          <td>{order.unitNumber?.value}</td>
-          <td>{order.componentDescription}</td>
-          {/* <td>
-            <input
-              type="text"
-              placeholder="Enter Location"
-              defaultValue={order.location || ""}
-            />
-          </td> */}
-          {/* <td>
-            <input
-              type="text"
-              placeholder="Enter Driver Name"
-              defaultValue={order.driverName || ""}
-            />
-          </td> */}
-          <td>{new Date(order.openedDate).toLocaleDateString()}</td>
-          <td>{renderElapsedTimeExtended(order.openedDate)}</td>
-          <td>{order.status}</td>
-        </tr>
-      ));
-    })
-  )}
-</tbody>
-
-</Table>
+          {/* Table displaying the grouped orders */}
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "400px" }}>
+            {Object.keys(groupedOrders).length === 0 ? (
+              <div>No {ticketView} orders available.</div>
+            ) : (
+              <Table bordered hover responsive className="text-center">
+                <thead className="table-dark">
+                  <tr style={{ verticalAlign: "middle" }}>
+                    <th>RC #</th>
+                    <th>RO #</th>
+                    <th>Unit Type</th>
+                    <th>Company</th>
+                    <th>Unit #</th>
+                    <th>Complaint</th>
+                    {/* Commenting out Driver Name column for now */}
+                    {/* <th>Driver Name</th> */}
+                    <th>Date</th>
+                    <th>Time Elapsed</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.entries(groupedOrders).map(([groupKey, groupOrders], groupIndex) => {
+                    const backgroundColor = groupIndex % 2 === 0 ? "#ffffcc" : "#ffffff";
+                    return groupOrders.map((order, index) => (
+                      <tr
+                        key={order.orderId}
+                        style={{ backgroundColor, verticalAlign: "middle", cursor: "pointer" }}
+                        onClick={() => navigate(`/ticket/${order.orderId}`)}
+                      >
+                        {index === 0 && (
+                          <td rowSpan={groupOrders.length}>
+                            {order.roadCallLink ? (
+                              <a
+                                href={order.roadCallLink}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                {order.roadCallNum}
+                              </a>
+                            ) : (
+                              order.roadCallNum || "N/A"
+                            )}
+                          </td>
+                        )}
+                        <td>
+                          <a
+                            href={`https://ttx.tmwcloud.com/AMSApp/Orders/RepairCreate.aspx?OrderId=${order.orderId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {order.orderNumber}
+                          </a>
+                        </td>
+                        <td>
+                          <UnitIcon unitType={order.unitNumber?.details?.UnitType} size={48} color="#000" />
+                        </td>
+                        <td>{order.customer?.NAME || "None"}</td>
+                        <td>{order.unitNumber?.value}</td>
+                        <td>{order.componentDescription}</td>
+                        {/* Driver Name column is commented out */}
+                        <td>{new Date(order.openedDate).toLocaleDateString()}</td>
+                        <td>{renderElapsedTimeExtended(order.openedDate)}</td>
+                        <td>{order.status}</td>
+                      </tr>
+                    ));
+                  })}
+                </tbody>
+              </Table>
+            )}
           </div>
         </>
       ) : (
-        // Logged out view
         <div className="text-center py-5">
           <h4>Welcome to TNTX Connect</h4>
           <p>We handle all of your breakdown solutions.</p>
           <p>Please login or register an account to see orders.</p>
-          <Button
-            variant="dark"
-            className="mt-3"
-            onClick={() => navigate("/login")}
-          >
+          <Button variant="dark" className="mt-3" onClick={() => navigate("/login")}>
             Login / Register
           </Button>
         </div>

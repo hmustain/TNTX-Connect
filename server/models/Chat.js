@@ -3,12 +3,11 @@ const mongoose = require('mongoose');
 
 const chatSchema = new mongoose.Schema(
   {
+    // Changed from an ObjectId reference to a String for the road call id
     ticket: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Ticket',
+      type: String,
       required: true
     },
-    // The sender of the message: could be a user or agent.
     sender: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -20,12 +19,12 @@ const chatSchema = new mongoose.Schema(
     },
     media: [
       {
-        type: String // URL or path to the media file
+        type: String // URL/path to media file
       }
     ]
   },
   {
-    timestamps: true // Automatically adds createdAt and updatedAt fields
+    timestamps: true
   }
 );
 

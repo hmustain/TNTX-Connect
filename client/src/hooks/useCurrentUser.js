@@ -24,8 +24,9 @@ const useCurrentUser = () => {
         return res.json();
       })
       .then((data) => {
-        setUser(data.data); // Assuming your endpoint returns { success: true, data: user }
-      })
+        console.log("User data from /api/auth/me:", data.data);
+        setUser(data.data);
+      })      
       .catch((error) => {
         console.error("Error fetching current user:", error);
         setUser(null);

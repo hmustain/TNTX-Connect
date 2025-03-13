@@ -12,42 +12,51 @@ const seedUsers = async () => {
     // Clear existing users
     await User.deleteMany({});
 
-    // Predefined companies for non-admin/agent users
-    const allowedCompanyNames = [
-      "Sky Transportation",
-      "Big M Trucking",
-      "Ledwell",
-      "FedEx",
-      "Melton Truck Lines"
+    // Allowed companies based on Trimble customer keys (excluding TNTX Solutions)
+    const allowedCustomerKeys = [
+      "MELTON",
+      "104376",
+      "ROYAL",
+      "HODGES",
+      "SMT",
+      "CCT",
+      "BIGM",
+      "WATKINS",
+      "WILSON",
+      "MC EXPRESS",
+      "SKY"
     ];
-    // Special company for admin/agent users
-    const adminCompanyName = "TNTX Solutions";
+    
+    // Special company for admin/agent users - TNTX Solutions.
+    const adminCompanyName = "TNTX SOLUTIONS";
+    const adminCompanyCode = "TNTXSOL";
 
-    // Ensure all allowed companies and the admin company exist in the DB.
     // Get all companies from the DB.
     let companies = await Company.find({});
-    
-    // Ensure admin company exists.
+
+    // Ensure TNTX Solutions exists.
     let adminCompany = companies.find(c => c.name === adminCompanyName);
     if (!adminCompany) {
-      adminCompany = await Company.create({ name: adminCompanyName });
+      adminCompany = await Company.create({ name: adminCompanyName, trimbleCode: adminCompanyCode });
       companies.push(adminCompany);
     }
-    
-    // Ensure each allowed company exists.
+
+    // Ensure each allowed company exists, using trimbleCode as identifier.
     const companyMap = {};
-    for (const name of allowedCompanyNames) {
-      let comp = companies.find(c => c.name === name);
+    for (const key of allowedCustomerKeys) {
+      // Try to find the company by trimbleCode.
+      let comp = companies.find(c => c.trimbleCode === key);
       if (!comp) {
-        comp = await Company.create({ name });
+        // Create the company with trimbleCode and name (using key as name here)
+        comp = await Company.create({ trimbleCode: key, name: key });
         companies.push(comp);
       }
-      companyMap[name] = comp;
+      companyMap[key] = comp;
     }
-    
+
     const createdUsers = [];
 
-    // Create the admin user (Hunter Mustain)
+    // Create the admin user (Hunter Mustain) for TNTX Solutions.
     const adminUserData = {
       name: "Hunter Mustain",
       email: "hunter@example.com",
@@ -59,36 +68,33 @@ const seedUsers = async () => {
     await adminUser.save();
     createdUsers.push(adminUser);
 
-   // For each allowed company, create 5 drivers and 1 company user.
-for (const companyName of allowedCompanyNames) {
-  const comp = companyMap[companyName];
-  
-  // Create 5 drivers for this company
-  for (let i = 1; i <= 5; i++) {
-    const driverData = {
-      name: `${companyName.split(" ")[0]} Driver ${i}`,
-      email: `${companyName.split(" ")[0].toLowerCase()}driver${i}@example.com`,
+    // Create an additional agent user for TNTX Solutions.
+    const agentUserData = {
+      name: "TNTX Solutions Agent",
+      email: "agent@tntxsolutions.com",
       password: "Test@1234",
-      role: "driver",
-      company: comp._id
+      role: "agent",
+      company: adminCompany._id
     };
-    const driver = new User(driverData);
-    await driver.save();
-    createdUsers.push(driver);
-  }
-  
-  // Create 1 company user for this company
-  const companyUserData = {
-    name: `${companyName.split(" ")[0]} User 1`,
-    email: `${companyName.split(" ")[0].toLowerCase()}user1@example.com`,
-    password: "Test@1234",
-    role: "company_user",
-    company: comp._id
-  };
-  const companyUser = new User(companyUserData);
-  await companyUser.save();
-  createdUsers.push(companyUser);
-}
+    const agentUser = new User(agentUserData);
+    await agentUser.save();
+    createdUsers.push(agentUser);
+
+    // For each allowed company, create 1 company_user.
+    for (const key of allowedCustomerKeys) {
+      const comp = companyMap[key];
+
+      const companyUserData = {
+        name: `${comp.name} User 1`,
+        email: `${comp.name.toLowerCase().replace(/\s+/g, '')}user1@example.com`,
+        password: "Test@1234",
+        role: "company_user",
+        company: comp._id
+      };
+      const companyUser = new User(companyUserData);
+      await companyUser.save();
+      createdUsers.push(companyUser);
+    }
 
     console.log("Seeded Users:");
     createdUsers.forEach(user => {

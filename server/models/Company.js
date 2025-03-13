@@ -3,9 +3,29 @@ const mongoose = require('mongoose');
 
 const companySchema = new mongoose.Schema(
   {
-    name: {
+    trimbleCode: {  // e.g., "BIGM"
       type: String,
-      required: [true, 'Please add a company name']
+      required: true,
+      unique: true
+    },
+    name: { // "BIG M TRANSPORTATION INC"
+      type: String,
+      required: true,
+    },
+    address1: {
+      type: String,
+    },
+    city: {
+      type: String,
+    },
+    state: {
+      type: String,
+    },
+    zipcode: {
+      type: String,
+    },
+    mainPhone: {
+      type: String,
     }
   },
   {

@@ -6,32 +6,77 @@ const connectDB = require('./config/db');
 
 const seedCompanies = async () => {
   try {
-    // Connect to the database
     await connectDB();
 
     // Clear the companies collection
     await Company.deleteMany({});
 
-    // Define an array of company names
-    const companyNames = [
-      "Sky Transportation",
-      "Big M Trucking",
-      "Ledwell",
-      "FedEx",
-      "Melton Truck Lines",
-      "TNTX Solutions"
+    // Define an array of companies with their Trimble data
+    const companiesData = [
+      // TNTX Solutions with full details
+      {
+        trimbleCode: "TNTXSOL",
+        name: "TNTX SOLUTIONS",
+        address1: "2501 HUGHES ROAD",
+        city: "GRAPVE",
+        state: "TX",
+        zipcode: "76051",
+        mainPhone: "888-600-1365"
+      },
+      // Allowed companies (update names as needed)
+      {
+        trimbleCode: "MELTON",
+        name: "Melton Truck Lines"
+      },
+      {
+        trimbleCode: "104376",
+        name: "FedEx"
+      },
+      {
+        trimbleCode: "ROYAL",
+        name: "Royal Transportation"
+      },
+      {
+        trimbleCode: "HODGES",
+        name: "Hodges Transportation"
+      },
+      {
+        trimbleCode: "SMT",
+        name: "Southwestern Motor Transport"
+      },
+      {
+        trimbleCode: "CCT",
+        name: "CCT Transportation"
+      },
+      {
+        trimbleCode: "BIGM",
+        name: "Big M Trucking"
+      },
+      {
+        trimbleCode: "WATKINS",
+        name: "Watkins Transportation"
+      },
+      {
+        trimbleCode: "WILSON",
+        name: "Wilson Transport"
+      },
+      {
+        trimbleCode: "MC EXPRESS",
+        name: "MC EXPRESS"
+      },
+      {
+        trimbleCode: "SKY",
+        name: "Sky Transportation"
+      }
     ];
-
-    // Map the company names into objects to be inserted
-    const companiesData = companyNames.map(name => ({ name }));
 
     // Insert companies into the database
     const companies = await Company.insertMany(companiesData);
 
     // Log the created companies with their IDs
-    console.log('Test companies created:');
+    console.log('Companies seeded:');
     companies.forEach(company => {
-      console.log(`${company.name} - ${company._id}`);
+      console.log(`${company.name} (${company.trimbleCode}) - ${company._id}`);
     });
 
     process.exit(0);

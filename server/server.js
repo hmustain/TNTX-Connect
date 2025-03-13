@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const connectDB = require('./config/db');
+const { client } = require('./utils/cache');
 
 // Connect to MongoDB
 connectDB();
@@ -27,8 +28,8 @@ const adminRoutes = require('./routes/admin');
 app.use('/api/admin', adminRoutes);
 
 // Trimble Route
-const trimbleRoutes = require('./routes/trimble');
-app.use('/api/trimble', trimbleRoutes);
+const { router: trimbleRouter } = require('./routes/trimble');
+app.use('/api/trimble', trimbleRouter);
 
 // Trimble Test Route
 const trimbleTestRoutes = require('./routes/trimbleTest');
@@ -37,6 +38,13 @@ app.use('/api/trimble-test', trimbleTestRoutes);
 app.get('/', (req, res) => {
   res.send('TNTX Connect Backend is running!');
 });
+
+// Flush Redis cache in development mode
+if (process.env.NODE_ENV === 'development') {
+  client.flushAll()
+    .then(() => console.log("Redis cache flushed"))
+    .catch(err => console.error("Error flushing Redis cache:", err));
+}
 
 // Only start the server if this file is run directly, not when imported for testing.
 if (require.main === module) {

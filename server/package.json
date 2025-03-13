@@ -2,17 +2,14 @@
   "name": "server",
   "version": "1.0.0",
   "main": "index.js",
-  "scripts": {
-    "start:redis": "redis-server",
-    "test": "jest --watchAll",
-    "seed:companies": "node seedCompanies.js",
-    "seed:users": "node seedUsers.js",
-    "seed:tickets": "node seedTickets.js",
-    "seed:chats": "node seedChats.js",
-    "seed": "npm run seed:companies && npm run seed:users && npm run seed:tickets && npm run seed:chats",
-    "prestart": "npm run seed",
-    "start": "concurrently \"npm run start:redis\" \"node server.js\""
-  },
+ "scripts": {
+  "start:redis": "redis-server",
+  "test": "jest --watchAll",
+  "seed:users": "node seedUsers.js",
+  "seed": "npm run seed:users",
+  "prestart": "npm run seed",
+  "start": "concurrently \"npm run start:redis\" \"node server.js\""
+},
   "keywords": [],
   "author": "",
   "license": "ISC",

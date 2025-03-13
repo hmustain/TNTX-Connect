@@ -233,6 +233,7 @@ async function fetchOrdersFromTrimble(query = {}) {
     "WATKINS",
     "WILSON",
     "MC EXPRESS",
+    "SKY",
   ];
   mappedOrders = mappedOrders.filter((order) => allowedCustomerKeys.includes(order.customer.key));
 

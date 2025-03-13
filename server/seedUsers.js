@@ -12,7 +12,7 @@ const seedUsers = async () => {
     // Clear existing users
     await User.deleteMany({});
 
-    // Allowed companies based on Trimble customer keys
+    // Allowed companies based on Trimble customer keys (excluding TNTX Solutions)
     const allowedCustomerKeys = [
       "MELTON",
       "104376",
@@ -24,26 +24,27 @@ const seedUsers = async () => {
       "WATKINS",
       "WILSON",
       "MC EXPRESS",
-      "SKY",
+      "SKY"
     ];
     
-    // Special company for admin/agent users
-    const adminCompanyName = "TNTX Solutions";
+    // Special company for admin/agent users - TNTX Solutions.
+    const adminCompanyName = "TNTX SOLUTIONS";
+    const adminCompanyCode = "TNTXSOL";
 
     // Get all companies from the DB.
     let companies = await Company.find({});
 
-    // Ensure admin company exists.
+    // Ensure TNTX Solutions exists.
     let adminCompany = companies.find(c => c.name === adminCompanyName);
     if (!adminCompany) {
-      adminCompany = await Company.create({ name: adminCompanyName });
+      adminCompany = await Company.create({ name: adminCompanyName, trimbleCode: adminCompanyCode });
       companies.push(adminCompany);
     }
 
     // Ensure each allowed company exists, using trimbleCode as identifier.
     const companyMap = {};
     for (const key of allowedCustomerKeys) {
-      // Try to find the company by trimbleCode
+      // Try to find the company by trimbleCode.
       let comp = companies.find(c => c.trimbleCode === key);
       if (!comp) {
         // Create the company with trimbleCode and name (using key as name here)
@@ -55,7 +56,7 @@ const seedUsers = async () => {
 
     const createdUsers = [];
 
-    // Create the admin user (TNTX Solutions)
+    // Create the admin user (Hunter Mustain) for TNTX Solutions.
     const adminUserData = {
       name: "Hunter Mustain",
       email: "hunter@example.com",
@@ -66,6 +67,18 @@ const seedUsers = async () => {
     const adminUser = new User(adminUserData);
     await adminUser.save();
     createdUsers.push(adminUser);
+
+    // Create an additional agent user for TNTX Solutions.
+    const agentUserData = {
+      name: "TNTX Solutions Agent",
+      email: "agent@tntxsolutions.com",
+      password: "Test@1234",
+      role: "agent",
+      company: adminCompany._id
+    };
+    const agentUser = new User(agentUserData);
+    await agentUser.save();
+    createdUsers.push(agentUser);
 
     // For each allowed company, create 1 company_user.
     for (const key of allowedCustomerKeys) {

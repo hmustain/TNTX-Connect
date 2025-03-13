@@ -3,99 +3,68 @@ const mongoose = require('mongoose');
 
 const ticketSchema = new mongoose.Schema(
   {
-    ticketNumber: {
+    // Trimble identifiers
+    trimbleOrderId: {
       type: String,
       required: true,
       unique: true,
-      // Will come back later to add logic for sequential ticket numbers.
     },
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
+    ticketNumber: { // Mapped from "orderNumber"
+      type: String,
       required: true,
+      unique: true,
     },
+    status: {
+      type: String,
+      enum: ['OPEN', 'CLOSED'], // based on Trimble "status"
+      default: 'OPEN',
+    },
+    openedDate: {
+      type: Date,
+    },
+    closedDate: {
+      type: Date,
+    },
+    // Vendor information (if needed)
+    vendor: {
+      code: String,
+      name: String,
+      phone: String,
+      city: String,
+      state: String,
+    },
+    // Unit Number and its details
+    unitNumber: {
+      value: String,
+      details: {
+        UnitNumber: String,
+        UnitType: String,
+        Make: String,
+        Model: String,
+        ModelYear: String,
+        SerialNo: String,
+        NameCustomer: String,
+      }
+    },
+    // Customer information, mapped to Company if applicable
     company: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Company',
-      required: [true, 'Please provide a company'],
+      required: true,
     },
-    driverPhone: {
-      type: String,
-      required: [true, 'Please add the driver phone number'],
-    },
-    truckNumber: {
-      type: String,
-      required: [true, 'Please add the truck number'],
-    },
-    vinLast8: {
-      type: String,
-      required: [true, 'Please add the last 8 characters of the VIN'],
-    },
-    mileage: {
-      type: Number,
-      required: [true, 'Please add the mileage'],
-    },
-    trailerNumber: {
-      type: String,
-      required: [false, 'Please add the trailer number'],
-    },
-    loadStatus: {
-      type: String,
-      enum: ['empty', 'loaded'],
-      required: [true, 'Please specify if the trailer is empty or loaded'],
-    },
-    loadNumber: {
-      type: String,
-      validate: {
-        validator: function(v) {
-          if (this.loadStatus === 'loaded') {
-            return v != null && v.trim().length > 0;
-          }
-          return true;
-        },
-        message: 'Load number is required if the trailer is loaded.',
-      },
-    },
-    unitAffected: {
-      type: String,
-      enum: ['tractor', 'trailer'],
-      required: [true, 'Please specify if the unit affected is tractor or trailer'],
-    },
-    complaint: {
-      type: String,
-      required: [true, 'Please describe the complaint or issue'],
-    },
-    currentLocation: {
-      type: String,
-      required: [true, 'Please provide the current location'],
-    },
-    locationAddress: {
+    // Road call details
+    roadCallId: {
       type: String,
     },
-    city: {
-      type: String,
-      required: [true, 'Please provide the current City'],
-    },
-    state: {
-      type: String,
-      required: [true, 'Please provide the current State'],
-    },
-    breakdownDescription:{
+    roadCallNum: {
       type: String,
     },
-    media: [
-      {
-        type: String, // URL or path for any uploaded pictures
-      },
-    ],
-    // Add the status field as part of the schema fields
-    status: {
+    roadCallLink: {
       type: String,
-      enum: ['Open', 'Closed'],
-      default: 'Open',
     },
+    // If any other fields are still relevant, they can be kept or removed based on your needs
   },
-  { timestamps: true } // Options object with timestamps
+  { timestamps: true }
 );
 
 module.exports = mongoose.model('Ticket', ticketSchema);

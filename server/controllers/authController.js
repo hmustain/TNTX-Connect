@@ -13,9 +13,9 @@ const registerUser = async (req, res) => {
     const company = await Company.findOne({
       $or: [
         { name: { $regex: new RegExp("^" + companyIdentifier + "$", "i") } },
-        { trimbleCode: companyIdentifier }
+        { trimbleCode: { $regex: new RegExp("^" + companyIdentifier + "$", "i") } }
       ]
-    });
+    });    
 
     if (!company) {
       return res.status(400).json({

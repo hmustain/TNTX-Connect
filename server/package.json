@@ -2,11 +2,12 @@
   "name": "server",
   "version": "1.0.0",
   "main": "index.js",
- "scripts": {
+"scripts": {
   "start:redis": "redis-server",
   "test": "jest --watchAll",
+  "seed:companies": "node seedCompanies.js",
   "seed:users": "node seedUsers.js",
-  "seed": "npm run seed:users",
+  "seed": "npm run seed:companies && npm run seed:users",
   "prestart": "npm run seed",
   "start": "concurrently \"npm run start:redis\" \"node server.js\""
 },

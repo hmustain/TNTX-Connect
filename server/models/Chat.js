@@ -8,7 +8,6 @@ const chatSchema = new mongoose.Schema(
       ref: 'Ticket',
       required: true
     },
-    // The sender of the message: could be a user or agent.
     sender: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
@@ -20,12 +19,12 @@ const chatSchema = new mongoose.Schema(
     },
     media: [
       {
-        type: String // URL or path to the media file
+        type: String
       }
     ]
   },
   {
-    timestamps: true // Automatically adds createdAt and updatedAt fields
+    timestamps: true
   }
 );
 

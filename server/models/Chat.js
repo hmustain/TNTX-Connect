@@ -3,9 +3,9 @@ const mongoose = require('mongoose');
 
 const chatSchema = new mongoose.Schema(
   {
+    // Changed from an ObjectId reference to a String for the road call id
     ticket: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Ticket',
+      type: String,
       required: true
     },
     sender: {
@@ -19,7 +19,7 @@ const chatSchema = new mongoose.Schema(
     },
     media: [
       {
-        type: String
+        type: String // URL/path to media file
       }
     ]
   },
